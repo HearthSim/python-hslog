@@ -1,4 +1,4 @@
-# hsslog
+# hslog
 [![Build Status](https://api.travis-ci.org/HearthSim/python-hslog.svg?branch=master)](https://travis-ci.org/HearthSim/python-hslog)
 
 hslog is a powerful Hearthstone Power.log deserializer.
@@ -79,3 +79,15 @@ could only happen if the player is friendly.
 
 This behaviour is undefined when the log contains a "double-spectate" (both sides
 of the games spectated at the same time).
+
+
+## License
+
+This project is licensed under the MIT license. The full license text is
+available in the LICENSE file.
+
+
+## Community
+
+This is a [HearthSim](https://hearthsim.info) project.
+[Join the HearthSim developer community](https://hearthsim.info/join/) to participate.
