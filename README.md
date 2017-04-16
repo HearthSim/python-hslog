@@ -1,4 +1,5 @@
 ## hearthstone.hslog
+[![Build Status](https://api.travis-ci.org/HearthSim/python-hslog.svg?branch=master)](https://travis-ci.org/HearthSim/python-hslog)
 
 hslog is a powerful Hearthstone Power.log deserializer.
 
