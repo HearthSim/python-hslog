@@ -1,9 +1,10 @@
-## hearthstone.hslog
+# hsslog
 [![Build Status](https://api.travis-ci.org/HearthSim/python-hslog.svg?branch=master)](https://travis-ci.org/HearthSim/python-hslog)
 
 hslog is a powerful Hearthstone Power.log deserializer.
 
-### Concepts
+
+## Concepts
 
 The data read from Power.log is deserialized into packets.
 The log is read line by line using a regex-based approach, with packets
@@ -13,7 +14,7 @@ which is nestable.
 We call the totality of the packets for a game the "Packet Tree".
 
 
-### Exporting a PacketTree
+## Exporting a PacketTree
 
 The `PacketTree` object makes it easy to recursively iterate over, which in
 turn makes it very easy to export into various other formats. The `.export()`
@@ -49,6 +50,32 @@ This is the default dispatch lookup:
 
 All of the methods in the dispatch dict should be implemented.
 
+
+### Exporting the game state
+
 The default exporter used by `PacketTree` is the `EntityTreeExporter`. It
 creates an "Entity Tree" by simulating each packet in its handler. Choices,
 Options and MetaData packets are ignored.
+
+The entity tree is a `hearthstone.entities.Game` object. It contains a list of
+entities in the `entities` attribute, which themselves have tags in their `tags`
+attribute.
+
+The export fully simulates every available packet. The game state at the end of
+the export is therefore the state of the game at the end of the parsed log file.
+
+
+### Exporting the friendly player
+
+Conceptually, a game does not have a friendly player. We can think of a game as
+the server-side object, which is sent to two separate players.
+However, a Power.log file *does* have a friendly player: The bottom player, whose
+cards are revealed.
+
+The `FriendlyPlayerExporter` class allows exporting the friendly player. The
+exporter works by looking through the initial tag changes and full entity
+packets, attempting to figure out which "side" is getting cards revealed that
+could only happen if the player is friendly.
+
+This behaviour is undefined when the log contains a "double-spectate" (both sides
+of the games spectated at the same time).
