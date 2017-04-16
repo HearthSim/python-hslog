@@ -302,3 +302,19 @@ def test_options_packet_with_errors():
 	assert target.entity == 37
 	assert target.error == PlayReq.REQ_TARGET_MAX_ATTACK
 	assert target.error_param == 3
+
+
+def test_options_no_option_packet():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+
+	with pytest.raises(ParsingError):
+		parser.handle_options(None, "option 0 type=END_TURN mainEntity=")
+
+
+def test_suboptions_no_option_packet():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+
+	with pytest.raises(ParsingError):
+		parser.handle_options(None, "subOption 0 entity=1")

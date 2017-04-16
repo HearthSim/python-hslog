@@ -273,6 +273,7 @@ class OptionsHandler(object):
 		super(OptionsHandler, self).__init__()
 		self._option_packet = None
 		self._options_packet = None
+		self._suboption_packet = None
 
 	def find_callback(self, method):
 		if method == self.parse_method("SendOption"):
@@ -332,6 +333,9 @@ class OptionsHandler(object):
 			node = self._option_packet
 		elif optype == "target":
 			node = self._suboption_packet or self._option_packet
+
+		if not node:
+			raise ParsingError("SubOption / target without a matching option: %r" % (data))
 
 		node.options.append(packet)
 
