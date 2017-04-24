@@ -3,7 +3,8 @@ import re
 
 # Entity format
 GAME_ENTITY = "GameEntity"
-_E = r"(%s|UNKNOWN HUMAN PLAYER|\[.+\]|\d+|.+)" % (GAME_ENTITY)
+UNKNOWN_HUMAN_PLAYER = "UNKNOWN HUMAN PLAYER"
+_E = r"(%s|%s|\[.+\]|\d+|.+)" % (GAME_ENTITY, UNKNOWN_HUMAN_PLAYER)
 ENTITY_RE = re.compile("\[.*\s*id=(\d+)\s*.*\]")
 
 # Line format

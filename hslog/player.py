@@ -4,9 +4,7 @@ do not have to receive one immediately.
 """
 from hearthstone.enums import GameTag
 from .exceptions import MissingPlayerData, ParsingError
-
-
-UNKNOWN_HUMAN_PLAYER = "UNKNOWN HUMAN PLAYER"
+from .tokens import UNKNOWN_HUMAN_PLAYER
 
 
 class LazyPlayer:
