@@ -3,7 +3,7 @@ Classes to provide lazy players that are treatable as an entity ID but
 do not have to receive one immediately.
 """
 from hearthstone.enums import GameTag
-from .exceptions import ParsingError
+from .exceptions import MissingPlayerData, ParsingError
 
 
 UNKNOWN_HUMAN_PLAYER = "UNKNOWN HUMAN PLAYER"
@@ -19,7 +19,7 @@ class LazyPlayer:
 
 	def __int__(self):
 		if not self.id:
-			raise RuntimeError("Entity ID not available for player %r" % (self.name))
+			raise MissingPlayerData("Entity ID not available for player %r" % (self.name))
 		return self.id
 
 

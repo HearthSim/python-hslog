@@ -9,3 +9,10 @@ class ParsingError(Exception):
 
 class RegexParsingError(ParsingError):
 	pass
+
+
+class MissingPlayerData(RuntimeError):
+	"""
+	Raised when it is not possible to reverse a LazyPlayer instance.
+	"""
+	pass

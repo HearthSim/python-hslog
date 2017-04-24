@@ -1,6 +1,7 @@
 from hearthstone.entities import Card, Game, Player
 from hearthstone.enums import GameTag, Zone
 from . import packets
+from .exceptions import MissingPlayerData
 
 
 class BaseExporter(object):
@@ -97,7 +98,7 @@ class EntityTreeExporter(BaseExporter):
 	def find_entity(self, id, opcode):
 		try:
 			entity = self.game.find_entity_by_id(id)
-		except RuntimeError as e:
+		except MissingPlayerData as e:
 			raise self.EntityNotFound("Error getting entity %r for %s" % (id, opcode))
 		if not entity:
 			raise self.EntityNotFound("Attempting %s on entity %r (not found)" % (opcode, id))
