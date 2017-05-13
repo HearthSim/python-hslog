@@ -284,9 +284,9 @@ class OptionsHandler(object):
 	def _parse_option_packet(self, ts, data):
 		if " errorParam=" in data:
 			sre = tokens.OPTIONS_OPTION_ERROR_RE.match(data)
-			optype, id, type, entity, error, error_param = sre.groups()
 			if not sre:
 				raise RegexParsingError(data)
+			optype, id, type, entity, error, error_param = sre.groups()
 			error, error_param = clean_option_errors(error, error_param)
 		else:
 			sre = tokens.OPTIONS_OPTION_RE.match(data)
