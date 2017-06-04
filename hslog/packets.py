@@ -6,6 +6,7 @@ class PacketTree:
 		self.ts = ts
 		self.packets = []
 		self.parent = None
+		self._packet_counter = 0
 
 	def __iter__(self):
 		for packet in self.packets:

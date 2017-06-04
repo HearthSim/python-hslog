@@ -624,6 +624,8 @@ class LogParser(PowerHandler, ChoicesHandler, OptionsHandler, SpectatorModeHandl
 		if node is None:
 			node = self.current_block.packets
 		node.append(packet)
+		self._packets._packet_counter += 1
+		packet.packet_id = self._packets._packet_counter
 
 	def parse_entity_or_player(self, entity):
 		id = parse_entity_id(entity)
