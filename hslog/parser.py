@@ -180,9 +180,8 @@ class PowerHandler(object):
 	def create_game(self, ts):
 		self.new_packet_tree(ts)
 		entity_id = 1
-		self._entity_packet = packets.CreateGame(ts, entity_id)
-		self._game_packet = self._entity_packet
-		self.current_block.packets.append(self._entity_packet)
+		self._game_packet = self._entity_packet = packets.CreateGame(ts, entity_id)
+		self.register_packet(self._game_packet)
 		return self._game_packet
 
 	def block_start(self, ts, entity, type, index, effectid, effectindex, target):
@@ -193,7 +192,7 @@ class PowerHandler(object):
 		target = self.parse_entity_or_player(target)
 		block = packets.Block(ts, id, type, index, effectid, effectindex, target)
 		block.parent = self.current_block
-		self.current_block.packets.append(block)
+		self.register_packet(block)
 		self.current_block = block
 		return block
 
@@ -209,7 +208,7 @@ class PowerHandler(object):
 	def full_entity(self, ts, id, card_id):
 		id = int(id)
 		self._entity_packet = packets.FullEntity(ts, id, card_id)
-		self.current_block.packets.append(self._entity_packet)
+		self.register_packet(self._entity_packet)
 
 		if self._creating_game:
 			# First packet after create game should always be a FULL_ENTITY
@@ -232,7 +231,7 @@ class PowerHandler(object):
 	def show_entity(self, ts, entity, card_id):
 		id = parse_entity_id(entity)
 		self._entity_packet = packets.ShowEntity(ts, id, card_id)
-		self.current_block.packets.append(self._entity_packet)
+		self.register_packet(self._entity_packet)
 		return self._entity_packet
 
 	def hide_entity(self, ts, entity, tag, value):
@@ -241,13 +240,13 @@ class PowerHandler(object):
 		if tag != GameTag.ZONE:
 			raise ParsingError("HIDE_ENTITY got non-zone tag (%r)" % (tag))
 		packet = packets.HideEntity(ts, id, value)
-		self.current_block.packets.append(packet)
+		self.register_packet(packet)
 		return packet
 
 	def change_entity(self, ts, entity, card_id):
 		id = self.parse_entity_or_player(entity)
 		self._entity_packet = packets.ChangeEntity(ts, id, card_id)
-		self.current_block.packets.append(self._entity_packet)
+		self.register_packet(self._entity_packet)
 		return self._entity_packet
 
 	def meta_data(self, ts, meta, data, info):
@@ -256,7 +255,7 @@ class PowerHandler(object):
 			data = parse_entity_id(data)
 		count = int(info)
 		self._metadata_node = packets.MetaData(ts, meta, data, count)
-		self.current_block.packets.append(self._metadata_node)
+		self.register_packet(self._metadata_node)
 		return self._metadata_node
 
 	def tag_change(self, ts, e, tag, value):
@@ -268,7 +267,7 @@ class PowerHandler(object):
 			id = self._packets.manager.register_player_name_on_tag_change(id, tag, value)
 
 		packet = packets.TagChange(ts, id, tag, value)
-		self.current_block.packets.append(packet)
+		self.register_packet(packet)
 		return packet
 
 
@@ -307,7 +306,7 @@ class OptionsHandler(object):
 		if not self._options_packet:
 			raise ParsingError("Option without a parent option group: %r" % (data))
 
-		self._options_packet.options.append(self._option_packet)
+		self.register_packet(self._option_packet, node=self._options_packet.options)
 		self._suboption_packet = None
 
 		return self._option_packet
@@ -341,7 +340,7 @@ class OptionsHandler(object):
 		if not node:
 			raise ParsingError("SubOption / target without a matching option: %r" % (data))
 
-		node.options.append(packet)
+		self.register_packet(packet, node=node.options)
 
 		return packet
 
@@ -366,7 +365,7 @@ class OptionsHandler(object):
 				raise RegexParsingError(data)
 			option, suboption, target, position = sre.groups()
 			packet = packets.SendOption(ts, int(option), int(suboption), int(target), int(position))
-			self.current_block.packets.append(packet)
+			self.register_packet(packet)
 			return packet
 		raise NotImplementedError("Unhandled send option: %r" % (data))
 
@@ -446,7 +445,7 @@ class ChoicesHandler(object):
 		type = parse_enum(ChoiceType, type)
 		min, max = int(min), int(max)
 		self._choice_packet = packets.Choices(ts, player, id, tasklist, type, min, max)
-		self.current_block.packets.append(self._choice_packet)
+		self.register_packet(self._choice_packet)
 		return self._choice_packet
 
 	def register_choices_old_1(self, ts, id, type):
@@ -479,7 +478,7 @@ class ChoicesHandler(object):
 			id = int(id)
 			type = parse_enum(ChoiceType, type)
 			self._send_choice_packet = packets.SendChoices(ts, id, type)
-			self.current_block.packets.append(self._send_choice_packet)
+			self.register_packet(self._send_choice_packet)
 			return self._send_choice_packet
 		elif data.startswith("m_chosenEntities"):
 			sre = tokens.SEND_CHOICES_ENTITIES_RE.match(data)
@@ -505,7 +504,7 @@ class ChoicesHandler(object):
 			player = self.parse_entity_or_player(player)
 			self._chosen_packet_count = int(count)
 			self._chosen_packet = packets.ChosenEntities(ts, player, id)
-			self.current_block.packets.append(self._chosen_packet)
+			self.register_packet(self._chosen_packet)
 			return self._chosen_packet
 		elif data.startswith("Entities["):
 			sre = tokens.ENTITIES_CHOSEN_ENTITIES_RE.match(data)
@@ -621,6 +620,11 @@ class LogParser(PowerHandler, ChoicesHandler, OptionsHandler, SpectatorModeHandl
 				ts = self.parse_timestamp(ts, method)
 				return callback(ts, msg)
 
+	def register_packet(self, packet, node=None):
+		if node is None:
+			node = self.current_block.packets
+		node.append(packet)
+
 	def parse_entity_or_player(self, entity):
 		id = parse_entity_id(entity)
 		if id is None:
@@ -638,5 +642,5 @@ class LogParser(PowerHandler, ChoicesHandler, OptionsHandler, SpectatorModeHandl
 		lo = int(lo)
 		lazy_player = self._packets.manager.new_player(id, player_id, is_ai=lo == 0)
 		self._entity_packet = packets.CreateGame.Player(ts, lazy_player, player_id, hi, lo)
-		self._game_packet.players.append(self._entity_packet)
+		self.register_packet(self._entity_packet, node=self._game_packet.players)
 		return lazy_player
