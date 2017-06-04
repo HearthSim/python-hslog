@@ -168,17 +168,21 @@ class PowerHandler(object):
 			return
 		return callback(ts, *sre.groups())
 
-	# Messages
-	def create_game(self, ts):
-		entity_id = 1
+	def new_packet_tree(self, ts):
 		self._packets = packets.PacketTree(ts)
 		self._packets.spectator_mode = self.spectator_mode
 		self._packets.manager = PlayerManager()
+		self.current_block = self._packets
+		self.games.append(self._packets)
+		return self._packets
+
+	# Messages
+	def create_game(self, ts):
+		self.new_packet_tree(ts)
+		entity_id = 1
 		self._entity_packet = packets.CreateGame(ts, entity_id)
 		self._game_packet = self._entity_packet
-		self.current_block = self._packets
 		self.current_block.packets.append(self._entity_packet)
-		self.games.append(self._packets)
 		return self._game_packet
 
 	def block_start(self, ts, entity, type, index, effectid, effectindex, target):
