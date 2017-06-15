@@ -181,7 +181,7 @@ class FriendlyPlayerExporter(BaseExporter):
 		# The following logic only works for pre-13619 logs
 		# The first FULL_ENTITY packet which is in Zone.HAND and does *not*
 		# have an ID is owned by the friendly player's *opponent*.
-		if tags[GameTag.ZONE] == Zone.HAND and not packet.card_id:
+		if tags.get(GameTag.ZONE, 0) == Zone.HAND and not packet.card_id:
 			controller = self._controller_map[packet.entity]
 			# That controller is the enemy player - return its opponent.
 			self.friendly_player = controller % 2 + 1
