@@ -112,6 +112,8 @@ class PlayerManager:
 				raise ParsingError("Unknown entity ID in choice: %r" % (choice))
 			player_id = self._entity_controller_map[choice]
 			# We need ENTITY_ID for register_player_name()
+			if player_id not in self._players_by_player_id:
+				raise ParsingError("Unseen player id %r" % (player_id))
 			entity_id = int(self._players_by_player_id[player_id])
 			packet.entity = entity_id
 			return self.register_player_name(lazy_player.name, entity_id)
