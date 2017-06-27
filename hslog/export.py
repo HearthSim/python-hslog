@@ -4,7 +4,7 @@ from . import packets
 from .exceptions import MissingPlayerData
 
 
-class BaseExporter(object):
+class BaseExporter:
 	def __init__(self, packet_tree):
 		self.packet_tree = packet_tree
 		self.dispatch = self.get_dispatch_dict()
@@ -157,7 +157,7 @@ class FriendlyPlayerExporter(BaseExporter):
 	May produce incorrect results in spectator mode if both hands are revealed.
 	"""
 	def __init__(self, packet_tree):
-		super(FriendlyPlayerExporter, self).__init__(packet_tree)
+		super().__init__(packet_tree)
 		self._controller_map = {}
 		self.friendly_player = None
 

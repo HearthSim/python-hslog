@@ -57,7 +57,7 @@ def clean_option_errors(error, error_param):
 	return error, error_param
 
 
-class PowerHandler(object):
+class PowerHandler:
 	def __init__(self):
 		super(PowerHandler, self).__init__()
 		self.current_block = None
@@ -271,7 +271,7 @@ class PowerHandler(object):
 		return packet
 
 
-class OptionsHandler(object):
+class OptionsHandler:
 	def __init__(self):
 		super(OptionsHandler, self).__init__()
 		self._option_packet = None
@@ -370,7 +370,7 @@ class OptionsHandler(object):
 		raise NotImplementedError("Unhandled send option: %r" % (data))
 
 
-class ChoicesHandler(object):
+class ChoicesHandler:
 	def __init__(self):
 		super(ChoicesHandler, self).__init__()
 		self._choice_packet = None
@@ -523,7 +523,7 @@ class ChoicesHandler(object):
 		raise NotImplementedError("Unhandled entities chosen: %r" % (data))
 
 
-class SpectatorModeHandler(object):
+class SpectatorModeHandler:
 	def __init__(self):
 		super(SpectatorModeHandler, self).__init__()
 		self.spectating_first_player = False
