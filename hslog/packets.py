@@ -41,7 +41,9 @@ class Packet:
 class Block(Packet):
 	power_type = PowerType.BLOCK_START
 
-	def __init__(self, ts, entity, type, index, effectid, effectindex, target):
+	def __init__(
+		self, ts, entity, type, index, effectid, effectindex, target, suboption, trigger_keyword
+	):
 		self.ts = ts
 		self.entity = entity
 		self.type = type
@@ -49,6 +51,8 @@ class Block(Packet):
 		self.effectid = effectid
 		self.effectindex = effectindex
 		self.target = target
+		self.suboption = suboption
+		self.trigger_keyword = trigger_keyword
 		self.ended = False
 		self.packets = []
 

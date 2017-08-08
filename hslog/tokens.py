@@ -20,7 +20,10 @@ PLAYER_ENTITY_RE = re.compile(r"Player EntityID=(\d+) PlayerID=(\d+) GameAccount
 # Messages
 CREATE_GAME_RE = re.compile(r"^CREATE_GAME$")
 ACTION_START_OLD_RE = re.compile(r"ACTION_START Entity=%s (?:SubType|BlockType)=(\w+) Index=(-1|\d+) Target=%s$" % (_E, _E))
-BLOCK_START_RE = re.compile(r"(?:ACTION|BLOCK)_START (?:SubType|BlockType)=(\w+) Entity=%s EffectCardId=(.*) EffectIndex=(-1|\d+) Target=%s$" % (_E, _E))  # Changed in 12051
+ACTION_START_RE = re.compile(r"ACTION_START SubType=(\w+) Entity=%s EffectCardId=(.*) EffectIndex=(-1|\d+) Target=%s$" % (_E, _E))
+BLOCK_START_12051_RE = re.compile(r"BLOCK_START BlockType=(\w+) Entity=%s EffectCardId=(.*) EffectIndex=(-1|\d+) Target=%s$" % (_E, _E))
+BLOCK_START_20457_RE = re.compile(r"BLOCK_START BlockType=(\w+) Entity=%s EffectCardId=(.*) EffectIndex=(-1|\d+) Target=%s SubOption=(-1|\d+)$" % (_E, _E))
+BLOCK_START_20457_TRIGGER_KEYWORD_RE = re.compile(r"BLOCK_START BlockType=(\w+) Entity=%s EffectCardId=(.*) EffectIndex=(-1|\d+) Target=%s SubOption=(-1|\d+) TriggerKeyword=(\w+)$" % (_E, _E))
 BLOCK_END_RE = re.compile(r"^(?:ACTION|BLOCK)_END$")
 FULL_ENTITY_CREATE_RE = re.compile(r"FULL_ENTITY - Creating ID=(\d+) CardID=(\w+)?$")
 FULL_ENTITY_UPDATE_RE = re.compile(r"FULL_ENTITY - Updating %s CardID=(\w+)?$" % _E)

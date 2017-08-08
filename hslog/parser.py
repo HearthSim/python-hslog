@@ -130,17 +130,37 @@ class PowerHandler:
 		if opcode == "CREATE_GAME":
 			regex, callback = tokens.CREATE_GAME_RE, self.create_game
 		elif opcode in ("ACTION_START", "BLOCK_START"):
-			sre = tokens.BLOCK_START_RE.match(data)
-			if sre is None:
-				sre = tokens.ACTION_START_OLD_RE.match(data)
-				if not sre:
-					raise RegexParsingError(data)
-				entity, type, index, target = sre.groups()
-				effectid, effectindex = None, None
+			index = None
+			effectid, effectindex = None, None
+			suboption, trigger_keyword = None, None
+			if " SubOption=" in data:
+				if " TriggerKeyword=" in data:
+					sre = tokens.BLOCK_START_20457_TRIGGER_KEYWORD_RE.match(data)
+					if sre is None:
+						raise RegexParsingError(data)
+					type, entity, effectid, effectindex, target, suboption, trigger_keyword = sre.groups()
+				else:
+					sre = tokens.BLOCK_START_20457_RE.match(data)
+					if sre is None:
+						raise RegexParsingError(data)
+					type, entity, effectid, effectindex, target, suboption = sre.groups()
 			else:
-				type, entity, effectid, effectindex, target = sre.groups()
-				index = None
-			self.block_start(ts, entity, type, index, effectid, effectindex, target)
+				if opcode == "ACTION_START":
+					sre = tokens.ACTION_START_RE.match(data)
+				else:
+					sre = tokens.BLOCK_START_12051_RE.match(data)
+
+				if sre is None:
+					sre = tokens.ACTION_START_OLD_RE.match(data)
+					if not sre:
+						raise RegexParsingError(data)
+					entity, type, index, target = sre.groups()
+				else:
+					type, entity, effectid, effectindex, target = sre.groups()
+
+			self.block_start(
+				ts, entity, type, index, effectid, effectindex, target, suboption, trigger_keyword
+			)
 			return
 		elif opcode in ("ACTION_END", "BLOCK_END"):
 			regex, callback = tokens.BLOCK_END_RE, self.block_end
@@ -184,13 +204,22 @@ class PowerHandler:
 		self.register_packet(self._game_packet)
 		return self._game_packet
 
-	def block_start(self, ts, entity, type, index, effectid, effectindex, target):
+	def block_start(
+		self, ts, entity, type, index, effectid, effectindex, target, suboption, trigger_keyword
+	):
 		id = self.parse_entity_or_player(entity)
 		type = parse_enum(BlockType, type)
 		if index is not None:
 			index = int(index)
 		target = self.parse_entity_or_player(target)
-		block = packets.Block(ts, id, type, index, effectid, effectindex, target)
+		if suboption is not None:
+			suboption = int(suboption)
+		if trigger_keyword is not None:
+			trigger_keyword = parse_enum(GameTag, trigger_keyword)
+
+		block = packets.Block(
+			ts, id, type, index, effectid, effectindex, target, suboption, trigger_keyword
+		)
 		block.parent = self.current_block
 		self.register_packet(block)
 		self.current_block = block
