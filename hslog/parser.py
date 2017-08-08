@@ -176,6 +176,8 @@ class PowerHandler:
 		elif opcode == "CHANGE_ENTITY":
 			regex, callback = tokens.CHANGE_ENTITY_RE, self.change_entity
 		elif opcode == "TAG_CHANGE":
+			if data.endswith("DEF CHANGE"):
+				raise NotImplementedError("DEF CHANGE is not implemented")
 			regex, callback = tokens.TAG_CHANGE_RE, self.tag_change
 		elif opcode == "META_DATA":
 			regex, callback = tokens.META_DATA_RE, self.meta_data
