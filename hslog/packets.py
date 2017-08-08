@@ -30,6 +30,25 @@ class PacketTree:
 		exporter = cls(self)
 		return exporter.export()
 
+	def recursive_iter(self, cls=None):
+		"""
+		Iterate recursively over the PacketTree.
+		Optional argument `cls` yields only packets of that instance.
+		"""
+		if cls is None:
+			cls = Packet
+
+		def _iter_recursive(packets, cls):
+			for packet in packets:
+				if isinstance(packet, cls):
+					yield packet
+				if isinstance(packet, Block):
+					for p in _iter_recursive(packet.packets, cls):
+						yield p
+
+		for packet in _iter_recursive(self.packets, cls):
+			yield packet
+
 
 class Packet:
 	power_type = 0
