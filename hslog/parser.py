@@ -176,8 +176,6 @@ class PowerHandler:
 		elif opcode == "CHANGE_ENTITY":
 			regex, callback = tokens.CHANGE_ENTITY_RE, self.change_entity
 		elif opcode == "TAG_CHANGE":
-			if data.endswith("DEF CHANGE"):
-				raise NotImplementedError("DEF CHANGE is not implemented")
 			regex, callback = tokens.TAG_CHANGE_RE, self.tag_change
 		elif opcode == "META_DATA":
 			regex, callback = tokens.META_DATA_RE, self.meta_data
@@ -289,7 +287,7 @@ class PowerHandler:
 		self.register_packet(self._metadata_node)
 		return self._metadata_node
 
-	def tag_change(self, ts, e, tag, value):
+	def tag_change(self, ts, e, tag, value, def_change):
 		id = self.parse_entity_or_player(e)
 		tag, value = parse_tag(tag, value)
 		self._check_for_mulligan_hack(ts, tag, value)
@@ -297,7 +295,8 @@ class PowerHandler:
 		if isinstance(id, LazyPlayer):
 			id = self._packets.manager.register_player_name_on_tag_change(id, tag, value)
 
-		packet = packets.TagChange(ts, id, tag, value)
+		has_change_def = def_change == tokens.DEF_CHANGE
+		packet = packets.TagChange(ts, id, tag, value, has_change_def)
 		self.register_packet(packet)
 		return packet
 

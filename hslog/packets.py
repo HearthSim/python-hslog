@@ -173,11 +173,12 @@ class ChangeEntity(Packet):
 class TagChange(Packet):
 	power_type = PowerType.TAG_CHANGE
 
-	def __init__(self, ts, entity, tag, value):
+	def __init__(self, ts, entity, tag, value, has_change_def=False):
 		self.ts = ts
 		self.entity = entity
 		self.tag = tag
 		self.value = value
+		self.has_change_def = has_change_def
 
 
 class Choices(Packet):

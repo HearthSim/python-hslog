@@ -1,5 +1,6 @@
 import pytest
 from hslog.export import EntityTreeExporter, FriendlyPlayerExporter
+from hslog.packets import TagChange
 from .conftest import logfile
 
 
@@ -32,3 +33,16 @@ def test_20457(parser):
 	game = exporter.export()
 	assert game.game.players[0].name == "Necroessenza"
 	assert game.game.players[1].name == "Heigan l'Impuro"
+
+
+@regression_suite
+def test_change_def(parser):
+	with open(logfile("20457_def_change.power.log")) as f:
+		parser.read(f)
+
+	c = 0
+	for packet in parser.games[0].recursive_iter(TagChange):
+		if packet.has_change_def:
+			c += 1
+
+	assert c == 7
