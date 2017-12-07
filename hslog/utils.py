@@ -1,4 +1,4 @@
-from hearthstone.enums import GameTag, TAG_TYPES
+from hearthstone.enums import TAG_TYPES, GameTag
 
 
 def parse_enum(enum, value):

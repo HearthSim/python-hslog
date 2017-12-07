@@ -1,6 +1,8 @@
 import pytest
+
 from hslog.export import EntityTreeExporter, FriendlyPlayerExporter
 from hslog.packets import TagChange
+
 from .conftest import logfile
 
 

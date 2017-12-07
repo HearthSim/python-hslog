@@ -4,16 +4,18 @@ from io import StringIO
 import pytest
 from aniso8601 import parse_datetime
 from hearthstone.enums import (
-	CardType, ChoiceType, GameTag, OptionType, PlayReq, PlayState, PowerType,
-	State, Step, Zone
+	CardType, ChoiceType, GameTag, OptionType,
+	PlayReq, PlayState, PowerType, State, Step, Zone
 )
+
 from hslog import LogParser
 from hslog.exceptions import ParsingError
 from hslog.export import FriendlyPlayerExporter
 from hslog.parser import parse_entity_id, parse_initial_tag
+
 from .data import (
-	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY, INITIAL_GAME, INVALID_GAME,
-	OPTIONS_WITH_ERRORS,
+	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY,
+	INITIAL_GAME, INVALID_GAME, OPTIONS_WITH_ERRORS
 )
 
 

@@ -1,6 +1,8 @@
 import os
 import subprocess
+
 import pytest
+
 from hslog import LogParser
 
 

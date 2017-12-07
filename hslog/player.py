@@ -3,6 +3,7 @@ Classes to provide lazy players that are treatable as an entity ID but
 do not have to receive one immediately.
 """
 from hearthstone.enums import GameTag
+
 from .exceptions import MissingPlayerData, ParsingError
 from .tokens import UNKNOWN_HUMAN_PLAYER
 

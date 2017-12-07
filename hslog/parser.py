@@ -1,10 +1,11 @@
 import logging
 from datetime import datetime, timedelta
+
 from aniso8601 import parse_time
 from hearthstone.enums import (
-	BlockType, ChoiceType, GameTag, MetaDataType, Mulligan, OptionType,
-	PlayReq, PowerType
+	BlockType, ChoiceType, GameTag, MetaDataType, Mulligan, OptionType, PlayReq, PowerType
 )
+
 from . import packets, tokens
 from .exceptions import ParsingError, RegexParsingError
 from .player import LazyPlayer, PlayerManager

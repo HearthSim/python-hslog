@@ -1,5 +1,6 @@
 from hearthstone.entities import Card, Game, Player
 from hearthstone.enums import GameTag, Zone
+
 from . import packets
 from .exceptions import MissingPlayerData
 
