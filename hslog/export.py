@@ -122,6 +122,7 @@ class EntityTreeExporter(BaseExporter):
 		entity = self.player_class(id, packet.player_id, packet.hi, packet.lo, packet.name)
 		entity.tags = dict(packet.tags)
 		self.game.register_entity(entity)
+		entity.initial_hero_entity_id = entity.tags.get(GameTag.HERO_ENTITY, 0)
 		return entity
 
 	def handle_full_entity(self, packet):
