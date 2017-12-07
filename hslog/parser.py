@@ -658,6 +658,9 @@ class LogParser(PowerHandler, ChoicesHandler, OptionsHandler, SpectatorModeHandl
 		packet.packet_id = self._packets._packet_counter
 
 	def parse_entity_or_player(self, entity):
+		if entity == "-1":
+			return
+
 		id = parse_entity_id(entity)
 		if id is None:
 			# Only case where an id is None is if it's a Player name
