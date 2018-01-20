@@ -69,6 +69,12 @@ class PlayerManager:
 	def register_controller(self, entity, controller):
 		self._entity_controller_map[entity] = controller
 
+	def register_player_from_game_info(self, battletag, player_id):
+		entity_id = player_id + 1  # urgh
+		name = battletag.split("#")[0]
+
+		return self.register_player_name(name, entity_id)
+
 	def register_player_name(self, name, id):
 		"""
 		Registers a link between \a name and \a id.

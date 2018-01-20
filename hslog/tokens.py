@@ -38,6 +38,9 @@ META_DATA_RE = re.compile(r"META_DATA - Meta=(\w+) Data=%s Info=(\d+)" % _E)
 TAG_VALUE_RE = re.compile(r"tag=(\w+) value=(\w+)")
 METADATA_INFO_RE = re.compile(r"Info\[(\d+)\] = %s" % _E)
 
+# Game
+GAME_PLAYER_META = re.compile(r"PlayerID=(\d+), PlayerName=(.*)")
+
 # Choices
 CHOICES_CHOICE_OLD_1_RE = re.compile(r"id=(\d+) ChoiceType=(\w+)$")
 CHOICES_CHOICE_OLD_2_RE = re.compile(r"id=(\d+) PlayerId=(\d+) ChoiceType=(\w+) CountMin=(\d+) CountMax=(\d+)$")

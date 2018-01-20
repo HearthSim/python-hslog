@@ -3,7 +3,8 @@ from datetime import datetime, timedelta
 
 from aniso8601 import parse_time
 from hearthstone.enums import (
-	BlockType, ChoiceType, GameTag, MetaDataType, Mulligan, OptionType, PlayReq, PowerType
+	BlockType, ChoiceType, FormatType, GameTag, GameType,
+	MetaDataType, Mulligan, OptionType, PlayReq, PowerType
 )
 
 from . import packets, tokens
@@ -65,6 +66,7 @@ class PowerHandler:
 		self._metadata_node = None
 		self._packets = None
 		self._creating_game = False
+		self.game_meta = {}
 
 	def _check_for_mulligan_hack(self, ts, tag, value):
 		# Old game logs didn't handle asynchronous mulligans properly.
@@ -79,6 +81,28 @@ class PowerHandler:
 	def find_callback(self, method):
 		if method == self.parse_method("DebugPrintPower"):
 			return self.handle_data
+		elif method == self.parse_method("DebugPrintGame"):
+			return self.handle_game
+
+	def handle_game(self, ts, data):
+		if data.startswith("PlayerID="):
+			sre = tokens.GAME_PLAYER_META.match(data)
+			if not sre:
+				raise RegexParsingError(data)
+			player_id, player_name = sre.groups()
+			player_id = int(player_id)
+		else:
+			key, value = data.split("=")
+			key = key.strip()
+			value = value.strip()
+			if key == "GameType":
+				value = parse_enum(GameType, value)
+			elif key == "FormatType":
+				value = parse_enum(FormatType, value)
+			else:
+				value = int(value)
+
+			self.game_meta[key] = value
 
 	def handle_data(self, ts, data):
 		opcode = data.split()[0]
@@ -584,7 +608,9 @@ class SpectatorModeHandler:
 			raise NotImplementedError("Unhandled spectator mode: %r" % (line))
 
 
-class LogParser(PowerHandler, ChoicesHandler, OptionsHandler, SpectatorModeHandler):
+class LogParser(
+	PowerHandler, ChoicesHandler, OptionsHandler, SpectatorModeHandler
+):
 	def __init__(self):
 		super(LogParser, self).__init__()
 		self.games = []
