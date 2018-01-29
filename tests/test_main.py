@@ -14,8 +14,8 @@ from hslog.export import FriendlyPlayerExporter
 from hslog.parser import parse_entity_id, parse_initial_tag
 
 from .data import (
-	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY,
-	INITIAL_GAME, INVALID_GAME, OPTIONS_WITH_ERRORS
+	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY, INITIAL_GAME,
+	INVALID_GAME, OPTIONS_WITH_ERRORS, UNROUNDABLE_TIMESTAMP
 )
 
 
@@ -170,6 +170,18 @@ def test_timestamp_parsing():
 	assert ts.second == 14
 	assert ts.tzinfo
 	assert ts.utcoffset() == timedelta(hours=2)
+
+
+def test_unroundable_timestamp():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(UNROUNDABLE_TIMESTAMP))
+	parser.flush()
+
+	# Should probably assert something like:
+	#   assert parser.games[0].packets[0].ts == time(14, 43, 59, 999999)
+	# or
+	#   assert parser.games[0].packets[0].ts == time(14, 44, 0, 0)
 
 
 def test_info_outside_of_metadata():
