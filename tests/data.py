@@ -149,3 +149,16 @@ D 23:16:30.6284990 GameState.DebugPrintOptions() -   option 15 type=POWER mainEn
 D 23:16:30.6293790 GameState.DebugPrintOptions() -   option 16 type=POWER mainEntity=[name=Chillwind Yeti id=37 zone=PLAY zonePos=1 cardId=CS2_182 player=2] error=REQ_YOUR_TURN errorParam=
 D 23:16:30.6303440 GameState.DebugPrintOptions() -   option 17 type=POWER mainEntity=[name=UNKNOWN ENTITY [cardType=INVALID] id=44 zone=HAND zonePos=1 cardId= player=2] error=REQ_YOUR_TURN errorParam=
 """.strip()
+
+UNROUNDABLE_TIMESTAMP = """
+D 14:43:59.9999997 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=Bonemare id=25 zone=HAND zonePos=2 cardId=ICC_705 player=1] EffectCardId= EffectIndex=0 Target=[entityName=Spellbreaker id=32 zone=PLAY zonePos=1 cardId=EX1_048 player=1] SubOption=-1
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Doomflow tag=RESOURCES_USED value=8
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Doomflow tag=NUM_RESOURCES_SPENT_THIS_GAME value=46
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Doomflow tag=NUM_CARDS_PLAYED_THIS_TURN value=2
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Doomflow tag=NUM_MINIONS_PLAYED_THIS_TURN value=2
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Soulfire id=4 zone=HAND zonePos=6 cardId=EX1_308 player=1] tag=ZONE_POSITION value=5
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Spellbreaker id=33 zone=HAND zonePos=5 cardId=EX1_048 player=1] tag=ZONE_POSITION value=4
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Flame Imp id=28 zone=HAND zonePos=4 cardId=EX1_319 player=1] tag=ZONE_POSITION value=3
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Malchezaar's Imp id=18 zone=HAND zonePos=3 cardId=KAR_089 player=1] tag=ZONE_POSITION value=2
+D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Bonemare id=25 zone=HAND zonePos=2 cardId=ICC_705 player=1] tag=ZONE_POSITION value=0
+""".strip()
