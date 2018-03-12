@@ -1,4 +1,5 @@
 import pytest
+from hearthstone.enums import FormatType, GameType
 
 from hslog.export import EntityTreeExporter, FriendlyPlayerExporter
 from hslog.packets import TagChange
@@ -48,3 +49,16 @@ def test_change_def(parser):
 			c += 1
 
 	assert c == 7
+
+
+@regression_suite
+def test_debugprintgame(parser):
+	with open(logfile("23576_debugprintgame.power.log")) as f:
+		parser.read(f)
+
+	assert parser.game_meta == {
+		"BuildNumber": 23576,
+		"FormatType": FormatType.FT_WILD,
+		"GameType": GameType.GT_RANKED,
+		"ScenarioID": 2,
+	}
