@@ -2,7 +2,7 @@ from hearthstone.entities import Card, Game, Player
 from hearthstone.enums import GameTag, Zone
 
 from . import packets
-from .exceptions import MissingPlayerData
+from .exceptions import ExporterError, MissingPlayerData
 
 
 class BaseExporter:
@@ -143,6 +143,11 @@ class EntityTreeExporter(BaseExporter):
 
 	def handle_change_entity(self, packet):
 		entity = self.find_entity(packet.entity, "CHANGE_ENTITY")
+		if not entity.card_id:
+			# This can only happen if the entity's initial reveal was missed.
+			# Not raising this can cause entities to have a card id, but no initial_card_id.
+			# If you want that behaviour, subclass EntityTreeExporter and override this.
+			raise ExporterError("Attempted CHANGE_ENTITY on an entity with no known card ID.")
 		entity.change(packet.card_id, dict(packet.tags))
 		return entity
 

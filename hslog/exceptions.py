@@ -4,10 +4,20 @@ Log parsing exceptions
 
 
 class ParsingError(Exception):
+	"""
+	Generic exception that happens during log parsing.
+	"""
 	pass
 
 
 class RegexParsingError(ParsingError):
+	pass
+
+
+class ExporterError(Exception):
+	"""
+	Generic exception that happens during PacketTree export.
+	"""
 	pass
 
 

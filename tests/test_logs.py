@@ -1,7 +1,7 @@
 import pytest
 from hearthstone.enums import FormatType, GameType
 
-from hslog.export import EntityTreeExporter, FriendlyPlayerExporter
+from hslog.export import EntityTreeExporter, ExporterError, FriendlyPlayerExporter
 from hslog.packets import TagChange
 
 from .conftest import logfile
@@ -62,3 +62,14 @@ def test_debugprintgame(parser):
 		"GameType": GameType.GT_RANKED,
 		"ScenarioID": 2,
 	}
+
+
+@regression_suite
+def test_bad_ids(parser):
+	with open(logfile("chaos/change_entity_null_id.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	with pytest.raises(ExporterError):
+		exporter.export()
