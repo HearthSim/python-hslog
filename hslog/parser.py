@@ -107,6 +107,10 @@ class PowerHandler:
 	def handle_data(self, ts, data):
 		opcode = data.split()[0]
 
+		if opcode == "ERROR:":
+			# Line error... skip
+			return
+
 		if opcode in PowerType.__members__:
 			return self.handle_power(ts, opcode, data)
 

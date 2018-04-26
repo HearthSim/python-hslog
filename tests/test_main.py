@@ -330,3 +330,15 @@ def test_suboptions_no_option_packet():
 
 	with pytest.raises(ParsingError):
 		parser.handle_options(None, "subOption 0 entity=1")
+
+
+def test_error_unhandled_powtype():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+
+	# This shouldn't raise an exception
+	parser.read(StringIO(
+		"D 02:13:03.1360001 GameState.DebugPrintPower() - "
+		"ERROR: unhandled PowType RESET_GAME"
+	))
+	parser.flush()
