@@ -1,5 +1,5 @@
 from hearthstone.entities import Card, Game, Player
-from hearthstone.enums import GameTag, Zone
+from hearthstone.enums import BlockType, GameTag, Zone
 
 from . import packets
 from .exceptions import ExporterError, MissingPlayerData
@@ -104,6 +104,11 @@ class EntityTreeExporter(BaseExporter):
 		if not entity:
 			raise self.EntityNotFound("Attempting %s on entity %r (not found)" % (opcode, id))
 		return entity
+
+	def handle_block(self, packet):
+		if packet.type == BlockType.GAME_RESET:
+			self.game.reset()
+		super().handle_block(packet)
 
 	def handle_create_game(self, packet):
 		self.game = self.game_class(packet.entity)
