@@ -11,3 +11,5 @@ creds.py
 *.retry
 .vscode/
 public/
+.tox/
+hslog.egg-info/
