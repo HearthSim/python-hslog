@@ -2,14 +2,28 @@ import time
 from collections import deque
 from threading import Thread
 
+from hearthstone.enums import FormatType, GameType
+
 from hslog import packets, tokens
+from hslog.exceptions import RegexParsingError
 from hslog.live.packets import LivePacketTree
+from hslog.live.player import LivePlayerManager
 from hslog.parser import LogParser
-from hslog.player import LazyPlayer, PlayerManager
-from hslog.utils import parse_tag
+from hslog.player import LazyPlayer
+from hslog.utils import parse_enum, parse_tag
 
 
 class LiveLogParser(LogParser):
+	"""
+		LiveLogParser adds live log translation into useful data.
+
+		Lines are read and pushed into a deque by a separate thread.
+		Deque is emptied by parse_worker which replaces the read()
+		function of LogParser and it"s also in a separate thread.
+
+		This approach is non-blocking and allows for live parsing
+		of incoming lines.
+	"""
 
 	def __init__(self, filepath):
 		super(LiveLogParser, self).__init__()
@@ -18,55 +32,101 @@ class LiveLogParser(LogParser):
 		self.lines_deque = deque([])
 
 	def new_packet_tree(self, ts):
+		"""
+			LivePacketTree is introduced here because it instantiates LiveEntityTreeExporter
+			and keeps track of the parser parent. It also contains a function that
+			utilizes the liveExporter instance across all the games.
+
+			self.parser = parser
+			self.liveExporter = LiveEntityTreeExporter(self)
+		"""
 		self._packets = LivePacketTree(ts, self)
 		self._packets.spectator_mode = self.spectator_mode
-		self._packets.manager = PlayerManager()
+		self._packets.manager = LivePlayerManager()
 		self.current_block = self._packets
 		self.games.append(self._packets)
 
-		""" why is this return important? """
+		"""
+			why is this return important?
+			it"s called only here:
+
+				def create_game(self, ts):
+					self.new_packet_tree(ts)
+		"""
 		return self._packets
+
+	def handle_game(self, ts, data):
+		if data.startswith("PlayerID="):
+			sre = tokens.GAME_PLAYER_META.match(data)
+			if not sre:
+				raise RegexParsingError(data)
+			player_id, player_name = sre.groups()
+
+			# set the name of the player
+			players = self.games[-1].liveExporter.game.players
+			for p in players:
+				if p.player_id == int(player_id):
+					p.name = player_name
+
+			player_id = int(player_id)
+		else:
+			key, value = data.split("=")
+			key = key.strip()
+			value = value.strip()
+			if key == "GameType":
+				value = parse_enum(GameType, value)
+			elif key == "FormatType":
+				value = parse_enum(FormatType, value)
+			else:
+				value = int(value)
+
+			self.game_meta[key] = value
 
 	def tag_change(self, ts, e, tag, value, def_change):
 		entity_id = self.parse_entity_or_player(e)
 		tag, value = parse_tag(tag, value)
 		self._check_for_mulligan_hack(ts, tag, value)
 
-		""" skipping LazyPlayer here because it doesn"t have data """
-		skip = False
 		if isinstance(entity_id, LazyPlayer):
 			entity_id = self._packets.manager.register_player_name_on_tag_change(
-				entity_id, tag, value
-			)
-			skip = True
+				entity_id, tag, value)
+
 		has_change_def = def_change == tokens.DEF_CHANGE
 		packet = packets.TagChange(ts, entity_id, tag, value, has_change_def)
-
-		if not skip:
+		if entity_id:
 			self.register_packet(packet)
 		return packet
 
 	def register_packet(self, packet, node=None):
-		""" make sure we"re registering packets to the current game"""
+		"""
+			LogParser.register_packet override
+
+			This uses the live_export functionality introduces by LivePacketTree
+			It also keeps track of which LivePacketTree is being used when there
+			are multiple in parser.games
+
+			A better naming for a PacketTree/LivePacketTree would be HearthstoneGame?
+			Then parser.games would contain HearthstoneGame instances and would
+			be more obvious what the purpose is.
+		"""
+
+		# make sure we"re registering packets to the current game
 		if not self._packets or self._packets != self.games[-1]:
 			self._packets = self.games[-1]
 
 		if node is None:
 			node = self.current_block.packets
 		node.append(packet)
-
-		""" line below triggers packet export which will
-			run update_callback for entity being
-			updated by the packet.
-
-			self._packets == EntityTreeExporter
-		"""
-		self._packets.live_export(packet)
-
 		self._packets._packet_counter += 1
 		packet.packet_id = self._packets._packet_counter
+		self._packets.live_export(packet)
 
 	def file_worker(self):
+		"""
+			File reader thread. (Naive implementation)
+			Reads the log file continuously and appends to deque.
+		"""
+
 		file = open(self.filepath, "r")
 		while self.running:
 			line = file.readline()
@@ -76,6 +136,9 @@ class LiveLogParser(LogParser):
 				time.sleep(0.2)
 
 	def parse_worker(self):
+		"""
+			If deque contains lines, this initiates parsing.
+		"""
 		while self.running:
 			if len(self.lines_deque):
 				line = self.lines_deque.popleft()

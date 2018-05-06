@@ -10,4 +10,8 @@ class LivePacketTree(PacketTree):
 		super(LivePacketTree, self).__init__(ts)
 
 	def live_export(self, packet):
+		"""
+			Triggers packet export which will run the proper handler for the packet.
+			This will also run update_callback for entity being updated by the packet.
+		"""
 		return self.liveExporter.export_packet(packet)
