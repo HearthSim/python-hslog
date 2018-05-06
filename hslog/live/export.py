@@ -4,10 +4,10 @@ from hslog.live.entities import LiveCard
 
 class LiveEntityTreeExporter(EntityTreeExporter):
     card_class = LiveCard
-    
+
     def __init__(self, packet_tree):
         super(LiveEntityTreeExporter, self).__init__(packet_tree)
-        
+
     def handle_full_entity(self, packet):
         entity_id = packet.entity
 

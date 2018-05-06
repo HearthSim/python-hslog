@@ -1,4 +1,4 @@
-from hearthstone.entities import Card, Game, Player, Entity
+from hearthstone.entities import Card, Entity
 from hearthstone.enums import GameTag
 
 '''
@@ -6,32 +6,34 @@ from hearthstone.enums import GameTag
  * LiveCard replaces Card and inserts update_callback
  * The point is to become able to route update events towards an API end-point
 '''
+
+
 class LiveEntity(Entity):
-    
+
     def __init__(self, entity_id, parent, **kwargs):
         ''' Entity requires an ID, store everything else in kwargs '''
         self.parent = parent
         self.game_index = self.parent.parser.games.index(self.parent)
         super(LiveEntity, self).__init__(entity_id, **kwargs)
-        
+
         # push data to an end-point
         print(f'GAME {self.game_index} --- ENTITY CREATED:', self)
-    
+
     def tag_change(self, tag, value):
         if tag == GameTag.CONTROLLER and not self._initial_controller:
             self._initial_controller = self.tags.get(GameTag.CONTROLLER, value)
         self.tags[tag] = value
-        
+
         # update notify
         self.update_callback()
-    
+
     def update_callback(self):
         # push data to an end-point
         print(f'GAME {self.game_index} --- ENTITY UPDATED:', self)
 
 
 class LiveCard(Card, LiveEntity):
-   
+
     def __init__(self, entity_id, card_id, parent):
         super(LiveCard, self).__init__(
             entity_id=entity_id,
@@ -46,13 +48,13 @@ class LiveCard(Card, LiveEntity):
         if self.initial_card_id is None:
             self.initial_card_id = card_id
         self.tags.update(tags)
-        
+
         # update notify
         self.update_callback()
 
     def hide(self):
         self.revealed = False
-        
+
         # update notify
         self.update_callback()
 
@@ -62,7 +64,6 @@ class LiveCard(Card, LiveEntity):
             self.initial_card_id = card_id
         self.card_id = card_id
         self.tags.update(tags)
-        
+
         # update notify
         self.update_callback()
-    
