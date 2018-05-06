@@ -1,0 +1,13 @@
+__pycache__/
+node_modules/
+*.log
+celerybeat.pid
+*.pyc
+.project
+.pydevproject
+.settings
+celerybeat-schedule
+creds.py
+*.retry
+.vscode/
+public/
