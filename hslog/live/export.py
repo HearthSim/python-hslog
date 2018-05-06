@@ -1,30 +1,32 @@
+from hearthstone.enums import GameTag
+
 from hslog.export import EntityTreeExporter
-from hslog.live.entities import LiveCard
+from hslog.live.entities import LiveCard, LiveGame, LivePlayer
+from hslog.live.utils import ACCESS_DEBUG
 
 
 class LiveEntityTreeExporter(EntityTreeExporter):
+	"""
+		Inherits EntityTreeExporter to provide Live entities
+	"""
+
+	game_class = LiveGame
+	player_class = LivePlayer
 	card_class = LiveCard
 
 	def __init__(self, packet_tree):
 		super(LiveEntityTreeExporter, self).__init__(packet_tree)
 
-	def handle_full_entity(self, packet):
-		entity_id = packet.entity
+	def handle_player(self, packet):
+		entity_id = int(packet.entity)
 
-		# Check if the entity already exists in the game first.
-		# This prevents creating it twice.
-		# This can legitimately happen in case of GAME_RESET
-		if entity_id <= len(self.game.entities):
-			# That first if check is an optimization to prevent always looping over all of
-			# the game"s entities every single FULL_ENTITY packet...
-			# FIXME: Switching to a dict for game.entities would simplify this.
-			existing_entity = self.game.find_entity_by_id(entity_id)
-			if existing_entity is not None:
-				existing_entity.card_id = packet.card_id
-				existing_entity.tags = dict(packet.tags)
-				return existing_entity
-
-		entity = self.card_class(entity_id, packet.card_id, self.packet_tree)
+		if hasattr(self.packet_tree, "manager"):
+			# If we have a PlayerManager, first we mutate the CreateGame.Player packet.
+			# This will have to change if we"re ever able to immediately get the names.
+			player = self.packet_tree.manager.get_player_by_id(entity_id)
+			packet.name = player.name
+		entity = self.player_class(entity_id, packet.player_id, packet.hi, packet.lo, packet.name)
 		entity.tags = dict(packet.tags)
 		self.game.register_entity(entity)
+		entity.initial_hero_entity_id = entity.tags.get(GameTag.HERO_ENTITY, 0)
 		return entity
