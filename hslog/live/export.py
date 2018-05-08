@@ -2,7 +2,6 @@ from hearthstone.enums import GameTag
 
 from hslog.export import EntityTreeExporter
 from hslog.live.entities import LiveCard, LiveGame, LivePlayer
-from hslog.live.utils import ACCESS_DEBUG
 
 
 class LiveEntityTreeExporter(EntityTreeExporter):
@@ -18,7 +17,6 @@ class LiveEntityTreeExporter(EntityTreeExporter):
 		super(LiveEntityTreeExporter, self).__init__(packet_tree)
 
 	def handle_player(self, packet):
-		ACCESS_DEBUG(self.__class__, "handle_player")
 		entity_id = int(packet.entity)
 
 		if hasattr(self.packet_tree, "manager"):

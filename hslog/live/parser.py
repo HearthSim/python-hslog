@@ -2,20 +2,18 @@ import time
 from collections import deque
 from threading import Thread
 
-from hearthstone.enums import FormatType, GameType
-
 from hslog import packets, tokens
 from hslog.exceptions import RegexParsingError
 from hslog.live.packets import LivePacketTree
 from hslog.live.player import LivePlayerManager
 from hslog.parser import LogParser
 from hslog.player import LazyPlayer
-from hslog.utils import parse_enum, parse_tag
+from hslog.utils import parse_tag
 
 
 class LiveLogParser(LogParser):
 	"""
-		LiveLogParser adds live log translation into useful data.
+		LiveLogParser provides live log translation into useful data.
 
 		Lines are read and pushed into a deque by a separate thread.
 		Deque is emptied by parse_worker which replaces the read()
@@ -46,14 +44,17 @@ class LiveLogParser(LogParser):
 		self.current_block = self._packets
 		self.games.append(self._packets)
 
-		"""
-			why is this return important?
-			it"s called only here:
+	def handle_entities_chosen(self, ts, data):
+		super(LiveLogParser, self).handle_entities_chosen(ts, data)
+		if data.startswith("id="):
+			sre = tokens.ENTITIES_CHOSEN_RE.match(data)
+			if not sre:
+				raise RegexParsingError(data)
+			player_name = sre.groups()[1]
 
-				def create_game(self, ts):
-					self.new_packet_tree(ts)
-		"""
-		return self._packets
+			# pick up opponent name from GameState.DebugPrintEntitiesChosen()
+			m = self._packets.manager
+			m.complete_player_names(player_name, self._packets)
 
 	def handle_game(self, ts, data):
 		if data.startswith("PlayerID="):
@@ -62,25 +63,13 @@ class LiveLogParser(LogParser):
 				raise RegexParsingError(data)
 			player_id, player_name = sre.groups()
 
-			# set the name of the player
-			players = self.games[-1].liveExporter.game.players
-			for p in players:
-				if p.player_id == int(player_id):
-					p.name = player_name
+			# set initial name based on GameState.DebugPrintGame()
+			m = self._packets.manager
+			m.set_initial_player_name(player_id, player_name, self._packets)
 
 			player_id = int(player_id)
 		else:
-			key, value = data.split("=")
-			key = key.strip()
-			value = value.strip()
-			if key == "GameType":
-				value = parse_enum(GameType, value)
-			elif key == "FormatType":
-				value = parse_enum(FormatType, value)
-			else:
-				value = int(value)
-
-			self.game_meta[key] = value
+			super(LiveLogParser, self).handle_game(ts, data)
 
 	def tag_change(self, ts, e, tag, value, def_change):
 		entity_id = self.parse_entity_or_player(e)

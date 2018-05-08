@@ -21,6 +21,7 @@ class LiveEntity(Entity):
 		if value is not None:
 			terminal_output("ENTITY CREATED", self)
 			# push data to an end-point
+			pass
 
 	def tag_change(self, tag, value):
 		if tag == GameTag.CONTROLLER and not self._initial_controller:
@@ -28,10 +29,12 @@ class LiveEntity(Entity):
 		self.tags[tag] = value
 		terminal_output("TAG UPDATED", self, tag, value)
 		# push data to an end-point
+		pass
 
 	def update_callback(self, caller):
 		terminal_output("ENTITY UPDATED", self)
 		# push data to an end-point
+		pass
 
 
 class LiveCard(Card, LiveEntity):

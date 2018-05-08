@@ -48,3 +48,11 @@ def terminal_output(msg_type, obj, attr=None, value=None):
 		align(repr(attr), 40),
 		align(value, 30),
 	)
+
+
+def debug_player_names(player_manager):
+	print("{} | {} | {}".format(
+		align(player_manager.actual_player_names, 40),
+		align(player_manager.names_used, 40),
+		align(player_manager.name_assignment_done, 10),
+	))
