@@ -29,12 +29,12 @@ def test_create_empty_game():
 
 	packet_tree = parser.games[0]
 	game = packet_tree.export().game
-	assert len(game.entities) == 3
+	assert len(game._entities) == 3
 	assert len(game.players) == 2
-	assert game.entities[0] is game
-	assert game.entities[0].id == 1
-	assert game.entities[1] is game.players[0]
-	assert game.entities[2] is game.players[1]
+	assert game._entities[1] is game
+	assert game._entities[1].id == 1
+	assert game._entities[2] is game.players[0]
+	assert game._entities[3] is game.players[1]
 	assert game.initial_state == State.INVALID
 	assert game.initial_step == Step.INVALID
 
@@ -101,7 +101,7 @@ def test_game_initialization():
 	assert len(parser.games) == 1
 	packet_tree = parser.games[0]
 	game = packet_tree.export().game
-	assert len(game.entities) == 3
+	assert len(game._entities) == 3
 	assert len(game.players) == 2
 
 	assert game.tags == {

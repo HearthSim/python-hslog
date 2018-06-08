@@ -73,3 +73,14 @@ def test_bad_ids(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	with pytest.raises(ExporterError):
 		exporter.export()
+
+
+@regression_suite
+def test_game_reset(parser):
+	with open(logfile("toki.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True
