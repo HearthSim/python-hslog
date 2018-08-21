@@ -342,3 +342,26 @@ def test_error_unhandled_powtype():
 		"ERROR: unhandled PowType RESET_GAME"
 	))
 	parser.flush()
+
+
+def test_target_no_entity():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+
+	parser.read(StringIO(
+		"D 01:02:58.3254653 GameState.DebugPrintOptions() - id=2\n" # noqa
+		"D 01:02:58.3254653 GameState.DebugPrintOptions() -   option 0 type=END_TURN mainEntity= error=INVALID errorParam=\n" # noqa
+		"D 01:02:58.3254653 GameState.DebugPrintOptions() -   option 1 type=POWER mainEntity= error=NONE errorParam=\n" # noqa
+		"D 01:02:58.3254653 GameState.DebugPrintOptions() -     target 0 entity= error=NONE errorParam=\n" # noqa
+		"D 01:02:58.3254653 GameState.DebugPrintOptions() -     target 1 entity= error=NONE errorParam=\n" # noqa
+	))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+
+	options_packet = packet_tree.packets[-1]
+	option = options_packet.options[1]
+	target = option.options[0]
+	assert target.entity is None
+	assert target.error is None
+	assert target.error_param is None

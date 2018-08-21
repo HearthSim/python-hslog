@@ -84,3 +84,14 @@ def test_game_reset(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	exporter.export()
 	assert True
+
+
+@regression_suite
+def test_puzzle_lab(parser):
+	with open(logfile("puzzlelab.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True

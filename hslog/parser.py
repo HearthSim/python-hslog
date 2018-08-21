@@ -385,10 +385,9 @@ class OptionsHandler:
 			error, error_param = None, None
 
 		id = int(id)
-		if not entity:
-			raise ParsingError("SubOption / target got an empty entity: %r" % (data))
+		if entity:
+			entity = self.parse_entity_or_player(entity)
 
-		entity = self.parse_entity_or_player(entity)
 		packet = packets.Option(ts, entity, id, None, optype, error, error_param)
 		if optype == "subOption":
 			self._suboption_packet = packet
