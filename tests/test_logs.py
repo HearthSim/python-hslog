@@ -106,3 +106,14 @@ def test_puzzle_lab_player(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	exporter.export()
 	assert True
+
+
+@regression_suite
+def test_unknown_human_player(parser):
+	with open(logfile("25770_unknown_human_player.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True

@@ -70,7 +70,9 @@ class PlayerManager:
 		self._entity_controller_map[entity] = controller
 
 	def register_player_name_by_player_id(self, name, player_id):
-		if name in self._players_by_name:
+		# We probably should raise an error if the name is not in _unregistered_names
+		# In practice this breaks though if we have a game with identical player names
+		if name in self._players_by_name and name in self._unregistered_names:
 			self._unregistered_names.remove(name)
 
 		lazy_player_by_player_id = self._players_by_player_id[player_id]
