@@ -77,7 +77,9 @@ class PlayerManager:
 
 		lazy_player_by_player_id = self._players_by_player_id[player_id]
 		lazy_player_by_player_id.name = name
-		self._registered_names.append(name)
+
+		if name != UNKNOWN_HUMAN_PLAYER:
+			self._registered_names.append(name)
 
 		self._players_by_name[name] = lazy_player_by_player_id.id
 
