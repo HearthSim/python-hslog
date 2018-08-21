@@ -79,6 +79,8 @@ class PlayerManager:
 
 		self._players_by_name[name] = lazy_player_by_player_id.id
 
+		return lazy_player_by_player_id
+
 	def register_player_name(self, name, id):
 		"""
 		Registers a link between \a name and \a id.
