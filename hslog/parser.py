@@ -91,6 +91,7 @@ class PowerHandler:
 				raise RegexParsingError(data)
 			player_id, player_name = sre.groups()
 			player_id = int(player_id)
+			self._packets.manager.register_player_name_by_player_id(player_name, player_id)
 		else:
 			key, value = data.split("=")
 			key = key.strip()

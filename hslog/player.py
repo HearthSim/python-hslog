@@ -69,11 +69,15 @@ class PlayerManager:
 	def register_controller(self, entity, controller):
 		self._entity_controller_map[entity] = controller
 
-	def register_player_from_game_info(self, battletag, player_id):
-		entity_id = player_id + 1  # urgh
-		name = battletag.split("#")[0]
+	def register_player_name_by_player_id(self, name, player_id):
+		if name in self._players_by_name:
+			self._unregistered_names.remove(name)
 
-		return self.register_player_name(name, entity_id)
+		lazy_player_by_player_id = self._players_by_player_id[player_id]
+		lazy_player_by_player_id.name = name
+		self._registered_names.append(name)
+
+		self._players_by_name[name] = lazy_player_by_player_id.id
 
 	def register_player_name(self, name, id):
 		"""
