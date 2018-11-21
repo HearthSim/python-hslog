@@ -1,5 +1,4 @@
 # https://travis-ci.org/HearthSim/python-hslog
-sudo: false
 language: python
 
 python: "3.6"
