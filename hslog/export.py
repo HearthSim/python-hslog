@@ -27,6 +27,7 @@ class BaseExporter:
 			packets.Options: self.handle_options,
 			packets.Option: self.handle_option,
 			packets.SendOption: self.handle_send_option,
+			packets.ResetGame: self.handle_reset_game,
 		}
 
 	def export(self):
@@ -85,6 +86,9 @@ class BaseExporter:
 		pass
 
 	def handle_send_option(self, packet):
+		pass
+
+	def handle_reset_game(self, packet):
 		pass
 
 
