@@ -365,3 +365,15 @@ def test_target_no_entity():
 	assert target.entity is None
 	assert target.error is None
 	assert target.error_param is None
+
+
+def test_reset_game():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+
+	# This shouldn't raise an exception
+	parser.read(StringIO(
+		"D 15:39:19.3190860 GameState.DebugPrintPower() - BLOCK_START BlockType=GAME_RESET Entity=[entityName=Temporal Loop id=17 zone=PLAY zonePos=0 cardId=GILA_900p player=1] EffectCardId= EffectIndex=-1 Target=0 SubOption=-1\n" # noqa
+		"D 15:39:19.3190860 GameState.DebugPrintPower() -     RESET_GAME\n"
+	))
+	parser.flush()

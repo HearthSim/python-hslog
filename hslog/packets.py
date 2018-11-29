@@ -243,3 +243,8 @@ class SendOption(Packet):
 		self.suboption = suboption
 		self.target = target
 		self.position = position
+
+
+class ResetGame(Packet):
+	def __init__(self, ts):
+		self.ts = ts

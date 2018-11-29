@@ -33,6 +33,7 @@ CHANGE_ENTITY_RE = re.compile(r"CHANGE_ENTITY - Updating Entity=%s CardID=(\w+)$
 DEF_CHANGE = "DEF CHANGE"
 TAG_CHANGE_RE = re.compile(r"TAG_CHANGE Entity=%s tag=(\w+) value=(\w+) ?(%s)?" % (_E, DEF_CHANGE))
 META_DATA_RE = re.compile(r"META_DATA - Meta=(\w+) Data=%s Info=(\d+)" % _E)
+RESET_GAME_RE = re.compile(r"RESET_GAME$")
 
 # Message details
 TAG_VALUE_RE = re.compile(r"tag=(\w+) value=(\w+)")
