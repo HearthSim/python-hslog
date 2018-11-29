@@ -209,6 +209,8 @@ class PowerHandler:
 			regex, callback = tokens.TAG_CHANGE_RE, self.tag_change
 		elif opcode == "META_DATA":
 			regex, callback = tokens.META_DATA_RE, self.meta_data
+		elif opcode == "RESET_GAME":
+			regex, callback = tokens.RESET_GAME_RE, self.reset_game
 		else:
 			raise NotImplementedError(data)
 
@@ -327,6 +329,11 @@ class PowerHandler:
 
 		has_change_def = def_change == tokens.DEF_CHANGE
 		packet = packets.TagChange(ts, id, tag, value, has_change_def)
+		self.register_packet(packet)
+		return packet
+
+	def reset_game(self, ts):
+		packet = packets.ResetGame(ts)
 		self.register_packet(packet)
 		return packet
 
