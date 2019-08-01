@@ -310,11 +310,11 @@ class PowerHandler:
 		self.register_packet(self._entity_packet)
 		return self._entity_packet
 
-	def meta_data(self, ts, meta, data, info):
+	def meta_data(self, ts, meta, data, info_count):
 		meta = parse_enum(MetaDataType, meta)
 		if meta == MetaDataType.JOUST:
 			data = parse_entity_id(data)
-		count = int(info)
+		count = int(info_count)
 		self._metadata_node = packets.MetaData(ts, meta, data, count)
 		self.register_packet(self._metadata_node)
 		return self._metadata_node
