@@ -146,6 +146,26 @@ class PowerHandler:
 			idx, entity = sre.groups()
 			entity = self.parse_entity_or_player(entity)
 			self._metadata_node.info.append(entity)
+		elif opcode == "Source":
+			sre = tokens.SUB_SPELL_START_SOURCE_RE.match(data)
+			if not sre:
+				raise RegexParsingError(data)
+			entity, = sre.groups()
+			entity = self.parse_entity_or_player(entity)
+			if not isinstance(self.current_block, packets.SubSpell):
+				logging.warning("SubSpell Source outside of SUB_SPELL: %r", data)
+				return
+			self.current_block.source = entity
+		elif opcode.startswith("Targets["):
+			sre = tokens.SUB_SPELL_START_TARGETS_RE.match(data)
+			if not sre:
+				raise RegexParsingError(data)
+			idx, entity = sre.groups()
+			entity = self.parse_entity_or_player(entity)
+			if not isinstance(self.current_block, packets.SubSpell):
+				logging.warning("SubSpell Target outside of SUB_SPELL: %r", data)
+				return
+			self.current_block.targets.append(entity)
 		else:
 			raise NotImplementedError(data)
 
@@ -211,6 +231,10 @@ class PowerHandler:
 			regex, callback = tokens.META_DATA_RE, self.meta_data
 		elif opcode == "RESET_GAME":
 			regex, callback = tokens.RESET_GAME_RE, self.reset_game
+		elif opcode == "SUB_SPELL_START":
+			regex, callback = tokens.SUB_SPELL_START_RE, self.sub_spell_start
+		elif opcode == "SUB_SPELL_END":
+			regex, callback = tokens.SUB_SPELL_END_RE, self.sub_spell_end
 		else:
 			raise NotImplementedError(data)
 
@@ -336,6 +360,25 @@ class PowerHandler:
 		packet = packets.ResetGame(ts)
 		self.register_packet(packet)
 		return packet
+
+	def sub_spell_start(self, ts, spell_prefab_guid, source, target_count):
+		id = int(source)
+		target_count = int(target_count)
+
+		sub_spell = packets.SubSpell(ts, spell_prefab_guid, id, target_count)
+		sub_spell.parent = self.current_block
+		self.register_packet(sub_spell)
+		self.current_block = sub_spell
+		return sub_spell
+
+	def sub_spell_end(self, ts):
+		if not self.current_block.parent:
+			logging.warning("[%s] Orphaned SUB_SPELL_END detected", ts)
+			return self.current_block
+		self.current_block.end()
+		sub_spell = self.current_block
+		self.current_block = self.current_block.parent
+		return sub_spell
 
 
 class OptionsHandler:

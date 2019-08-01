@@ -248,3 +248,25 @@ class SendOption(Packet):
 class ResetGame(Packet):
 	def __init__(self, ts):
 		self.ts = ts
+
+
+class SubSpell(Packet):
+	power_type = PowerType.SUB_SPELL_START
+
+	def __init__(self, ts, spell_prefab_guid, source, target_count):
+		self.ts = ts
+		self.spell_prefab_guid = spell_prefab_guid
+		self.source = source
+		self.target_count = target_count
+		self.ended = False
+		self.source = None
+		self.targets = []
+		self.packets = []
+
+	def __repr__(self):
+		return "%s(spell_prefab_guid=%r, source=%r)" % (
+			self.__class__.__name__, self.spell_prefab_guid, self.source
+		)
+
+	def end(self):
+		self.ended = True

@@ -162,3 +162,16 @@ D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityNa
 D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Malchezaar's Imp id=18 zone=HAND zonePos=3 cardId=KAR_089 player=1] tag=ZONE_POSITION value=2
 D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Bonemare id=25 zone=HAND zonePos=2 cardId=ICC_705 player=1] tag=ZONE_POSITION value=0
 """.strip()
+
+SUB_SPELL_BLOCK = """
+D 23:58:17.9818688 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=UNKNOWN ENTITY [cardType=INVALID] id=80 zone=HAND zonePos=4 cardId= player=2] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 
+D 23:58:17.9828680 GameState.DebugPrintPower() -     BLOCK_START BlockType=POWER Entity=[entityName=UNKNOWN ENTITY [cardType=INVALID] id=80 zone=HAND zonePos=4 cardId= player=2] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 
+D 23:58:17.9838675 GameState.DebugPrintPower() -         SUB_SPELL_START - SpellPrefabGUID=CannonBarrage_Missile_FX:e26b4681614e0964aa8ef7afebc560d1 Source=59 TargetCount=1
+D 23:58:17.9838675 GameState.DebugPrintPower() -                           Source = [entityName=Ol' Toomba id=59 zone=PLAY zonePos=0 cardId=DALA_BOSS_37h player=2]
+D 23:58:17.9838675 GameState.DebugPrintPower() -                           Targets[0] = [entityName=Don Han'Cho id=41 zone=PLAY zonePos=7 cardId=CFM_685 player=1]
+D 23:58:17.9838675 GameState.DebugPrintPower() -             META_DATA - Meta=HISTORY_TARGET Data=0 InfoCount=1
+D 23:58:17.9838675 GameState.DebugPrintPower() -                         Info[0] = [entityName=Don Han'Cho id=41 zone=PLAY zonePos=7 cardId=CFM_685 player=1]
+D 23:58:17.9838675 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Don Han'Cho id=41 zone=PLAY zonePos=7 cardId=CFM_685 player=1] tag=PREDAMAGE value=3 
+D 23:58:17.9838675 GameState.DebugPrintPower() -         SUB_SPELL_END
+D 23:58:17.9848671 GameState.DebugPrintPower() - BLOCK_END
+""".strip()

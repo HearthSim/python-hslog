@@ -14,8 +14,8 @@ from hslog.export import FriendlyPlayerExporter
 from hslog.parser import parse_entity_id, parse_initial_tag
 
 from .data import (
-	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY, INITIAL_GAME,
-	INVALID_GAME, OPTIONS_WITH_ERRORS, UNROUNDABLE_TIMESTAMP
+	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY, INITIAL_GAME, INVALID_GAME,
+	OPTIONS_WITH_ERRORS, SUB_SPELL_BLOCK, UNROUNDABLE_TIMESTAMP
 )
 
 
@@ -377,3 +377,24 @@ def test_reset_game():
 		"D 15:39:19.3190860 GameState.DebugPrintPower() -     RESET_GAME\n"
 	))
 	parser.flush()
+
+
+def test_sub_spell():
+	parser = LogParser()
+	parser.read(StringIO(INITIAL_GAME))
+
+	parser.read(StringIO(SUB_SPELL_BLOCK))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+	play_block = packet_tree.packets[-1]
+	power_block = play_block.packets[0]
+	assert len(power_block.packets) == 1
+	sub_spell_packet = power_block.packets[0]
+
+	assert sub_spell_packet.spell_prefab_guid == (
+		"CannonBarrage_Missile_FX:e26b4681614e0964aa8ef7afebc560d1"
+	)
+	assert sub_spell_packet.source == 59
+	assert sub_spell_packet.target_count == 1
+	assert sub_spell_packet.targets == [41]

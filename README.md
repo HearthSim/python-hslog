@@ -49,6 +49,8 @@ This is the default dispatch lookup:
 * `Options`: `handle_options`
 * `Option`: `handle_option`
 * `SendOption`: `handle_send_option`
+* `ResetGame`: `handle_reset_game`
+* `SubSpell`: `handle_sub_spell`
 
 All of the methods in the dispatch dict should be implemented.
 
