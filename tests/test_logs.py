@@ -7,13 +7,7 @@ from hslog.packets import TagChange
 from .conftest import logfile
 
 
-regression_suite = pytest.mark.skipif(
-	not pytest.config.getoption("--regression-suite"),
-	reason="need --regression-suite option to run"
-)
-
-
-@regression_suite
+@pytest.mark.regression_suite
 def test_friendly_player_superfriends_brawl(parser):
 	with open(logfile("friendly_player_id_is_1.power.log")) as f:
 		parser.read(f)
@@ -25,7 +19,7 @@ def test_friendly_player_superfriends_brawl(parser):
 	assert friendly_player == 1
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_20457(parser):
 	with open(logfile("20457_broken_names.power.log")) as f:
 		parser.read(f)
@@ -38,7 +32,7 @@ def test_20457(parser):
 	assert game.game.players[1].name == "Heigan l'Impuro"
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_change_def(parser):
 	with open(logfile("20457_def_change.power.log")) as f:
 		parser.read(f)
@@ -51,7 +45,7 @@ def test_change_def(parser):
 	assert c == 7
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_debugprintgame(parser):
 	with open(logfile("23576_debugprintgame.power.log")) as f:
 		parser.read(f)
@@ -64,7 +58,7 @@ def test_debugprintgame(parser):
 	}
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_bad_ids(parser):
 	with open(logfile("chaos/change_entity_null_id.power.log")) as f:
 		parser.read(f)
@@ -75,7 +69,7 @@ def test_bad_ids(parser):
 		exporter.export()
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_game_reset(parser):
 	with open(logfile("toki.power.log")) as f:
 		parser.read(f)
@@ -86,7 +80,7 @@ def test_game_reset(parser):
 	assert True
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_puzzle_lab(parser):
 	with open(logfile("puzzlelab.power.log")) as f:
 		parser.read(f)
@@ -97,7 +91,7 @@ def test_puzzle_lab(parser):
 	assert True
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_puzzle_lab_player(parser):
 	with open(logfile("puzzle_player.power.log")) as f:
 		parser.read(f)
@@ -108,7 +102,7 @@ def test_puzzle_lab_player(parser):
 	assert True
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_unknown_human_player(parser):
 	with open(logfile("25770_unknown_human_player.power.log")) as f:
 		parser.read(f)
@@ -119,7 +113,7 @@ def test_unknown_human_player(parser):
 	assert True
 
 
-@regression_suite
+@pytest.mark.regression_suite
 def test_inferrable_player(parser):
 	with open(logfile("25770_inferrable_player.power.log")) as f:
 		parser.read(f)
