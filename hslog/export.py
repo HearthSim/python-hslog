@@ -93,7 +93,8 @@ class BaseExporter:
 		pass
 
 	def handle_sub_spell(self, packet):
-		pass
+		for p in packet.packets:
+			self.export_packet(p)
 
 
 class EntityTreeExporter(BaseExporter):

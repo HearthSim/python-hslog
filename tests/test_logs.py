@@ -122,3 +122,14 @@ def test_inferrable_player(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	exporter.export()
 	assert True
+
+
+@pytest.mark.regression_suite
+def test_full_entity_defined_in_subspell(parser):
+	with open(logfile("34104_subspell.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True
