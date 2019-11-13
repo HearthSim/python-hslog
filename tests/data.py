@@ -175,3 +175,18 @@ D 23:58:17.9838675 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[
 D 23:58:17.9838675 GameState.DebugPrintPower() -         SUB_SPELL_END
 D 23:58:17.9848671 GameState.DebugPrintPower() - BLOCK_END
 """.strip()
+
+
+BGS_SUB_SPELL_BLOCK = """
+D 08:59:23.0098315 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=Freeze id=2718 zone=PLAY zonePos=0 cardId=TB_BaconShopLockAll_Button player=3] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -     BLOCK_START BlockType=POWER Entity=[entityName=Freeze id=2718 zone=PLAY zonePos=0 cardId=TB_BaconShopLockAll_Button player=3] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -         SUB_SPELL_START - SpellPrefabGUID=Bacon_FreezeMinions_AE_Super.prefab:49de73d8b72602f47994a795a78f050d Source=0 TargetCount=0
+D 08:59:23.0098315 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Bolvar, Fireblood id=2871 zone=PLAY zonePos=1 cardId=ICC_858 player=11] tag=FROZEN value=1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Cave Hydra id=2872 zone=PLAY zonePos=2 cardId=LOOT_078 player=11] tag=FROZEN value=1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Nightmare Amalgam id=2873 zone=PLAY zonePos=3 cardId=GIL_681 player=11] tag=FROZEN value=1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Bolvar, Fireblood id=2874 zone=PLAY zonePos=4 cardId=ICC_858 player=11] tag=FROZEN value=1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Kindly Grandmother id=2875 zone=PLAY zonePos=5 cardId=KAR_005 player=11] tag=FROZEN value=1 
+D 08:59:23.0098315 GameState.DebugPrintPower() -         SUB_SPELL_END
+D 08:59:23.0098315 GameState.DebugPrintPower() -     BLOCK_END
+D 08:59:23.0098315 GameState.DebugPrintPower() - BLOCK_END
+""".strip()

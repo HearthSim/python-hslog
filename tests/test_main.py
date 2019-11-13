@@ -13,15 +13,12 @@ from hslog.exceptions import ParsingError
 from hslog.export import FriendlyPlayerExporter
 from hslog.parser import parse_initial_tag
 
-from .data import (
-	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY, INITIAL_GAME, INVALID_GAME,
-	OPTIONS_WITH_ERRORS, SUB_SPELL_BLOCK, UNROUNDABLE_TIMESTAMP
-)
+from . import data
 
 
 def test_create_empty_game():
 	parser = LogParser()
-	parser.read(StringIO(EMPTY_GAME))
+	parser.read(StringIO(data.EMPTY_GAME))
 	parser.flush()
 
 	# Test resulting game/entities
@@ -95,7 +92,7 @@ def test_tag_value_parsing():
 
 def test_game_initialization():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
 	assert len(parser.games) == 1
@@ -145,7 +142,7 @@ def test_game_initialization():
 
 def test_timestamp_parsing():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
 	assert parser.games[0].packets[0].ts == time(2, 59, 14, 608862)
@@ -153,7 +150,7 @@ def test_timestamp_parsing():
 	# Test with an initial datetime
 	parser2 = LogParser()
 	parser2._current_date = datetime(2015, 1, 1)
-	parser2.read(StringIO(INITIAL_GAME))
+	parser2.read(StringIO(data.INITIAL_GAME))
 	parser2.flush()
 
 	assert parser2.games[0].packets[0].ts == datetime(2015, 1, 1, 2, 59, 14, 608862)
@@ -161,7 +158,7 @@ def test_timestamp_parsing():
 	# Same test, with timezone
 	parser2 = LogParser()
 	parser2._current_date = parse_datetime("2015-01-01T02:58:00+0200")
-	parser2.read(StringIO(INITIAL_GAME))
+	parser2.read(StringIO(data.INITIAL_GAME))
 	parser2.flush()
 
 	ts = parser2.games[0].packets[0].ts
@@ -174,8 +171,8 @@ def test_timestamp_parsing():
 
 def test_unroundable_timestamp():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
-	parser.read(StringIO(UNROUNDABLE_TIMESTAMP))
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.UNROUNDABLE_TIMESTAMP))
 	parser.flush()
 
 	# Timestamp has to be truncated
@@ -184,7 +181,7 @@ def test_unroundable_timestamp():
 
 def test_info_outside_of_metadata():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
 	info = u"D 02:59:14.6500380 GameState.DebugPrintPower() -             Info[0] = 99"
@@ -194,18 +191,18 @@ def test_info_outside_of_metadata():
 
 def test_empty_entity_in_options():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
-	data = "target 0 entity="
+	line = "target 0 entity="
 	with pytest.raises(ParsingError):
 		# This can happen, but the game is corrupt
-		parser.handle_options(None, data)
+		parser.handle_options(None, line)
 
 
 def test_warn_level():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
 	line = u"W 09:09:23.1428700 GameState.ReportStuck() - Stuck for 10s 89ms. {...}"
@@ -215,7 +212,7 @@ def test_warn_level():
 
 def test_empty_tasklist():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
 	ts = datetime.now()
@@ -238,7 +235,7 @@ def test_empty_tasklist():
 def test_tag_change_unknown_entity_format():
 	# Format changed in 15590
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 	parser.flush()
 
 	entity_format = (
@@ -247,8 +244,8 @@ def test_tag_change_unknown_entity_format():
 	id = parser.parse_entity_id(entity_format)
 	assert id == 24
 
-	data = "TAG_CHANGE Entity=%s tag=ZONE value=HAND" % (entity_format)
-	packet = parser.handle_power(None, "TAG_CHANGE", data)
+	line = "TAG_CHANGE Entity=%s tag=ZONE value=HAND" % (entity_format)
+	packet = parser.handle_power(None, "TAG_CHANGE", line)
 	assert packet.power_type == PowerType.TAG_CHANGE
 	assert packet.entity == id
 	assert packet.tag == GameTag.ZONE
@@ -257,8 +254,8 @@ def test_tag_change_unknown_entity_format():
 
 def test_initial_deck_initial_controller():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
-	parser.read(StringIO(FULL_ENTITY))
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.FULL_ENTITY))
 	parser.flush()
 	packet_tree = parser.games[0]
 	game = packet_tree.export().game
@@ -267,9 +264,9 @@ def test_initial_deck_initial_controller():
 	assert len(list(game.players[1].initial_deck)) == 0
 
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
-	parser.read(StringIO(FULL_ENTITY))
-	parser.read(StringIO(CONTROLLER_CHANGE))
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.FULL_ENTITY))
+	parser.read(StringIO(data.CONTROLLER_CHANGE))
 	parser.flush()
 	packet_tree = parser.games[0]
 	game = packet_tree.export().game
@@ -281,14 +278,14 @@ def test_initial_deck_initial_controller():
 def test_invalid_game_one_player():
 	parser = LogParser()
 	with pytest.raises(ParsingError):
-		parser.read(StringIO(INVALID_GAME))
+		parser.read(StringIO(data.INVALID_GAME))
 
 
 def test_options_packet_with_errors():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
-	parser.read(StringIO(OPTIONS_WITH_ERRORS))
+	parser.read(StringIO(data.OPTIONS_WITH_ERRORS))
 	parser.flush()
 	packet_tree = parser.games[0]
 
@@ -318,7 +315,7 @@ def test_options_packet_with_errors():
 
 def test_options_no_option_packet():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
 	with pytest.raises(ParsingError):
 		parser.handle_options(None, "option 0 type=END_TURN mainEntity=")
@@ -326,7 +323,7 @@ def test_options_no_option_packet():
 
 def test_suboptions_no_option_packet():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
 	with pytest.raises(ParsingError):
 		parser.handle_options(None, "subOption 0 entity=1")
@@ -334,7 +331,7 @@ def test_suboptions_no_option_packet():
 
 def test_error_unhandled_powtype():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
 	# This shouldn't raise an exception
 	parser.read(StringIO(
@@ -346,7 +343,7 @@ def test_error_unhandled_powtype():
 
 def test_target_no_entity():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
 	parser.read(StringIO(
 		"D 01:02:58.3254653 GameState.DebugPrintOptions() - id=2\n" # noqa
@@ -369,7 +366,7 @@ def test_target_no_entity():
 
 def test_reset_game():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
 	# This shouldn't raise an exception
 	parser.read(StringIO(
@@ -381,9 +378,9 @@ def test_reset_game():
 
 def test_sub_spell():
 	parser = LogParser()
-	parser.read(StringIO(INITIAL_GAME))
+	parser.read(StringIO(data.INITIAL_GAME))
 
-	parser.read(StringIO(SUB_SPELL_BLOCK))
+	parser.read(StringIO(data.SUB_SPELL_BLOCK))
 	parser.flush()
 
 	packet_tree = parser.games[0]
@@ -398,3 +395,24 @@ def test_sub_spell():
 	assert sub_spell_packet.source == 59
 	assert sub_spell_packet.target_count == 1
 	assert sub_spell_packet.targets == [41]
+
+
+def test_sub_spell_battlegrounds():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+
+	parser.read(StringIO(data.BGS_SUB_SPELL_BLOCK))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+	play_block = packet_tree.packets[-1]
+	power_block = play_block.packets[0]
+	assert len(power_block.packets) == 1
+	sub_spell_packet = power_block.packets[0]
+
+	assert sub_spell_packet.spell_prefab_guid == (
+		"Bacon_FreezeMinions_AE_Super.prefab:49de73d8b72602f47994a795a78f050d"
+	)
+	assert sub_spell_packet.source is None
+	assert sub_spell_packet.target_count == 0
+	assert sub_spell_packet.targets == []

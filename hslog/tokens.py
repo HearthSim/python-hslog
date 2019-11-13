@@ -34,7 +34,7 @@ DEF_CHANGE = "DEF CHANGE"
 TAG_CHANGE_RE = re.compile(r"TAG_CHANGE Entity=%s tag=(\w+) value=(\w+) ?(%s)?" % (_E, DEF_CHANGE))
 META_DATA_RE = re.compile(r"META_DATA - Meta=(\w+) Data=%s InfoCount=(\d+)" % _E)
 RESET_GAME_RE = re.compile(r"RESET_GAME$")
-SUB_SPELL_START_RE = re.compile(r"SUB_SPELL_START - SpellPrefabGUID=([\w:]+) Source=(\d+) TargetCount=(\d+)$")
+SUB_SPELL_START_RE = re.compile(r"SUB_SPELL_START - SpellPrefabGUID=([\w:.]+) Source=(\d+) TargetCount=(\d+)$")
 SUB_SPELL_END_RE = re.compile(r"SUB_SPELL_END$")
 
 # Message details
