@@ -13,20 +13,6 @@ from .player import LazyPlayer, PlayerManager
 from .utils import parse_enum, parse_tag
 
 
-def parse_entity_id(entity):
-	if entity.isdigit():
-		return int(entity)
-
-	if entity == tokens.GAME_ENTITY:
-		# GameEntity is always 1
-		return 1
-
-	sre = tokens.ENTITY_RE.match(entity)
-	if sre:
-		id = sre.groups()[0]
-		return int(id)
-
-
 def parse_initial_tag(data):
 	"""
 	Parse \a data, a line formatted as tag=FOO value=BAR
@@ -121,9 +107,7 @@ class PowerHandler:
 			sre = tokens.GAME_ENTITY_RE.match(data)
 			if not sre:
 				raise RegexParsingError(data)
-			id, = sre.groups()
-			if int(id) != 1:
-				raise ParsingError("GameEntity ID: Expected 1, got %r" % (id))
+			self.register_game(ts, *sre.groups())
 		elif opcode == "Player":
 			self.flush()
 			sre = tokens.PLAYER_ENTITY_RE.match(data)
@@ -255,10 +239,6 @@ class PowerHandler:
 	# Messages
 	def create_game(self, ts):
 		self.new_packet_tree(ts)
-		entity_id = 1
-		self._game_packet = self._entity_packet = packets.CreateGame(ts, entity_id)
-		self.register_packet(self._game_packet)
-		return self._game_packet
 
 	def block_start(
 		self, ts, entity, type, index, effectid, effectindex, target, suboption, trigger_keyword
@@ -298,29 +278,27 @@ class PowerHandler:
 		if self._creating_game:
 			# First packet after create game should always be a FULL_ENTITY
 			self._creating_game = False
-			# It should always have ID 4
-			if id != 4:
-				raise ParsingError("Expected entity 4 after creating game, got %r" % (id))
 
-			# While we're at it, we check if we got an abnormal amount of players
+			# Check if we got an abnormal amount of players
 			player_count = len(self._game_packet.players)
-			if player_count != 2:
-				raise ParsingError("Expected exactly 2 players, got %r" % (player_count))
+			if player_count < 2:
+				msg = "Expected at least 2 players before the first entity, got %r"
+				raise ParsingError(msg % (player_count))
 
 		return self._entity_packet
 
 	def full_entity_update(self, ts, entity, card_id):
-		id = parse_entity_id(entity)
+		id = self.parse_entity_id(entity)
 		return self.full_entity(ts, id, card_id)
 
 	def show_entity(self, ts, entity, card_id):
-		id = parse_entity_id(entity)
+		id = self.parse_entity_id(entity)
 		self._entity_packet = packets.ShowEntity(ts, id, card_id)
 		self.register_packet(self._entity_packet)
 		return self._entity_packet
 
 	def hide_entity(self, ts, entity, tag, value):
-		id = parse_entity_id(entity)
+		id = self.parse_entity_id(entity)
 		tag, value = parse_tag(tag, value)
 		if tag != GameTag.ZONE:
 			raise ParsingError("HIDE_ENTITY got non-zone tag (%r)" % (tag))
@@ -337,7 +315,7 @@ class PowerHandler:
 	def meta_data(self, ts, meta, data, info_count):
 		meta = parse_enum(MetaDataType, meta)
 		if meta == MetaDataType.JOUST:
-			data = parse_entity_id(data)
+			data = self.parse_entity_id(data)
 		count = int(info_count)
 		self._metadata_node = packets.MetaData(ts, meta, data, count)
 		self.register_packet(self._metadata_node)
@@ -738,11 +716,23 @@ class LogParser(
 		self._packets._packet_counter += 1
 		packet.packet_id = self._packets._packet_counter
 
+	def parse_entity_id(self, entity):
+		if entity.isdigit():
+			return int(entity)
+
+		if entity == tokens.GAME_ENTITY:
+			return int(self._game_packet.entity)
+
+		sre = tokens.ENTITY_RE.match(entity)
+		if sre:
+			id = sre.groups()[0]
+			return int(id)
+
 	def parse_entity_or_player(self, entity):
 		if entity == "-1":
 			return
 
-		id = parse_entity_id(entity)
+		id = self.parse_entity_id(entity)
 		if id is None:
 			# Only case where an id is None is if it's a Player name
 			id = self._packets.manager.get_player_by_name(entity)
@@ -750,6 +740,14 @@ class LogParser(
 
 	def parse_method(self, m):
 		return "%s.%s" % (self._game_state_processor, m)
+
+	def register_game(self, ts, id):
+		id = int(id)
+		# Use the timestamp from CREATE_GAME because it's earlier
+		ts = self._packets.ts
+		self._game_packet = self._entity_packet = packets.CreateGame(ts, id)
+		self.register_packet(self._game_packet)
+		return self._game_packet
 
 	def register_player(self, ts, id, player_id, hi, lo):
 		id = int(id)

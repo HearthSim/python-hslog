@@ -11,7 +11,7 @@ from hearthstone.enums import (
 from hslog import LogParser
 from hslog.exceptions import ParsingError
 from hslog.export import FriendlyPlayerExporter
-from hslog.parser import parse_entity_id, parse_initial_tag
+from hslog.parser import parse_initial_tag
 
 from .data import (
 	CONTROLLER_CHANGE, EMPTY_GAME, FULL_ENTITY, INITIAL_GAME, INVALID_GAME,
@@ -244,7 +244,7 @@ def test_tag_change_unknown_entity_format():
 	entity_format = (
 		"[name=UNKNOWN ENTITY [cardType=INVALID] id=24 zone=DECK zonePos=0 cardId= player=1]"
 	)
-	id = parse_entity_id(entity_format)
+	id = parser.parse_entity_id(entity_format)
 	assert id == 24
 
 	data = "TAG_CHANGE Entity=%s tag=ZONE value=HAND" % (entity_format)

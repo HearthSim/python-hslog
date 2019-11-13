@@ -33,6 +33,18 @@ def test_20457(parser):
 
 
 @pytest.mark.regression_suite
+def test_battlegrounds(parser):
+	with open(logfile("36393_battlegrounds.power.log")) as f:
+		parser.read(f)
+
+	assert len(parser.games) == 1
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	game = exporter.export()
+	assert game.game.players[0].name == "BehEh#1355"
+
+
+@pytest.mark.regression_suite
 def test_change_def(parser):
 	with open(logfile("20457_def_change.power.log")) as f:
 		parser.read(f)
