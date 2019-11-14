@@ -61,7 +61,7 @@ class PowerHandler:
 		if tag == GameTag.MULLIGAN_STATE and value == Mulligan.DEALING:
 			assert self.current_block
 			if isinstance(self.current_block, packets.Block):
-				logging.warning("WARNING: Broken mulligan nesting. Working around...")
+				logging.warning("[%s] Broken mulligan nesting. Working around...", ts)
 				self.block_end(ts)
 
 	def find_callback(self, method):
@@ -122,7 +122,7 @@ class PowerHandler:
 				self._packets.manager.register_controller(self._entity_packet.entity, value)
 		elif opcode.startswith("Info["):
 			if not self._metadata_node:
-				logging.warning("Metadata Info outside of META_DATA: %r", data)
+				logging.warning("[%s] Metadata Info outside of META_DATA: %r", ts, data)
 				return
 			sre = tokens.METADATA_INFO_RE.match(data)
 			if not sre:
@@ -137,7 +137,7 @@ class PowerHandler:
 			entity, = sre.groups()
 			entity = self.parse_entity_or_player(entity)
 			if not isinstance(self.current_block, packets.SubSpell):
-				logging.warning("SubSpell Source outside of SUB_SPELL: %r", data)
+				logging.warning("[%s] SubSpell Source outside of SUB_SPELL: %r", ts, data)
 				return
 			self.current_block.source = entity
 		elif opcode.startswith("Targets["):
@@ -147,7 +147,7 @@ class PowerHandler:
 			idx, entity = sre.groups()
 			entity = self.parse_entity_or_player(entity)
 			if not isinstance(self.current_block, packets.SubSpell):
-				logging.warning("SubSpell Target outside of SUB_SPELL: %r", data)
+				logging.warning("[%s] SubSpell Target outside of SUB_SPELL: %r", ts, data)
 				return
 			self.current_block.targets.append(entity)
 		else:
@@ -224,7 +224,7 @@ class PowerHandler:
 
 		sre = regex.match(data)
 		if not sre:
-			logging.warning("Could not correctly parse %r", data)
+			logging.warning("[%s] Could not correctly parse %r", ts, data)
 			return
 		return callback(ts, *sre.groups())
 
