@@ -194,14 +194,28 @@ class FriendlyPlayerExporter(BaseExporter):
 		super().__init__(packet_tree)
 		self._controller_map = {}
 		self.friendly_player = None
+		self._ai_player = None
+		self._non_ai_players = []
 
 	def export(self):
 		for packet in self.packet_tree:
 			self.export_packet(packet)
-			if self.friendly_player:
+			if self.friendly_player is not None:
 				# Stop export once we have it
 				break
 		return self.friendly_player
+
+	def handle_create_game(self, packet):
+		for player in packet.players:
+			self.export_packet(player)
+		if self._ai_player is not None and len(self._non_ai_players) == 1:
+			self.friendly_player = self._non_ai_players[0]
+
+	def handle_player(self, packet):
+		if packet.lo == 0:
+			self._ai_player = packet.player_id
+		else:
+			self._non_ai_players.append(packet.player_id)
 
 	def handle_tag_change(self, packet):
 		if packet.tag == GameTag.CONTROLLER:

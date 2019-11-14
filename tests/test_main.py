@@ -10,7 +10,6 @@ from hearthstone.enums import (
 
 from hslog import LogParser, packets
 from hslog.exceptions import ParsingError
-from hslog.export import FriendlyPlayerExporter
 from hslog.parser import parse_initial_tag
 
 from . import data
@@ -133,11 +132,6 @@ def test_game_initialization():
 		GameTag.ENTITY_ID: 3,
 		GameTag.CARDTYPE: CardType.PLAYER,
 	}
-
-	# Test that there should be no friendly player
-	fpe = FriendlyPlayerExporter(packet_tree)
-	friendly_player = fpe.export()
-	assert not friendly_player
 
 
 def test_timestamp_parsing():
