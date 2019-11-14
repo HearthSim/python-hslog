@@ -431,7 +431,17 @@ class OptionsHandler:
 
 		return packet
 
+	def _check_for_options_hack(self, ts):
+		# Battlegrounds games tend to omit the BLOCK_END just before options start. As
+		# options will always be on the top level, we can safely close any remaining block
+		# that is open at this time.
+		if isinstance(self.current_block, packets.Block):
+			logging.warning("[%s] Broken option nesting. Working around...", ts)
+			self.block_end(ts)
+			assert not isinstance(self.current_block, packets.Block)
+
 	def handle_options(self, ts, data):
+		self._check_for_options_hack(ts)
 		if data.startswith("id="):
 			sre = tokens.OPTIONS_ENTITY_RE.match(data)
 			if not sre:

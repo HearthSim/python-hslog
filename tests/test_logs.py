@@ -1,6 +1,7 @@
 import pytest
 from hearthstone.enums import FormatType, GameType
 
+from hslog import packets
 from hslog.export import EntityTreeExporter, ExporterError, FriendlyPlayerExporter
 from hslog.packets import TagChange
 
@@ -41,7 +42,9 @@ def test_battlegrounds(parser):
 	packet_tree = parser.games[0]
 	exporter = EntityTreeExporter(packet_tree)
 	game = exporter.export()
+	assert game.game.setup_done
 	assert game.game.players[0].name == "BehEh#1355"
+	assert len([packet for packet in packet_tree if isinstance(packet, packets.Options)]) == 96
 
 
 @pytest.mark.regression_suite

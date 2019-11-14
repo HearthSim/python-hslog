@@ -8,7 +8,7 @@ from hearthstone.enums import (
 	PlayReq, PlayState, PowerType, State, Step, Zone
 )
 
-from hslog import LogParser
+from hslog import LogParser, packets
 from hslog.exceptions import ParsingError
 from hslog.export import FriendlyPlayerExporter
 from hslog.parser import parse_initial_tag
@@ -416,3 +416,27 @@ def test_sub_spell_battlegrounds():
 	assert sub_spell_packet.source is None
 	assert sub_spell_packet.target_count == 0
 	assert sub_spell_packet.targets == []
+
+
+def test_options_missing_block_end():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+
+	parser.read(StringIO(
+		"D 09:01:05.7959635 GameState.DebugPrintPower() - BLOCK_START BlockType=ATTACK Entity=[entityName=Rat Pack id=2974 zone=PLAY zonePos=2 cardId=CFM_316 player=3] EffectCardId= EffectIndex=1 Target=0 SubOption=-1 \n" # noqa
+		"D 09:01:05.7959635 GameState.DebugPrintPower() -     BLOCK_START BlockType=TRIGGER Entity=[entityName=3ofKindCheckPlayerEnchant id=3319 zone=PLAY zonePos=0 cardId=TB_BaconShop_3ofKindChecke player=3] EffectCardId= EffectIndex=-1 Target=0 SubOption=-1 TriggerKeyword=0\n" # noqa
+		"D 09:01:05.7959635 GameState.DebugPrintPower() -     BLOCK_END\n" # noqa
+		"D 09:01:05.7959635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=BehEh#1355 tag=NUM_OPTIONS_PLAYED_THIS_TURN value=15 \n" # noqa
+		"D 09:01:05.8620235 GameState.DebugPrintOptions() - id=76\n" # noqa
+		"D 09:01:05.8620235 GameState.DebugPrintOptions() -   option 0 type=END_TURN mainEntity= error=INVALID errorParam=\n" # noqa
+	))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+
+	block_without_end = packet_tree.packets[1]
+	assert isinstance(block_without_end, packets.Block)
+	assert block_without_end.ended
+
+	options_packet = packet_tree.packets[-1]
+	assert isinstance(options_packet, packets.Options)
