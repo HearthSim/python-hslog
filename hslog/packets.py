@@ -259,7 +259,6 @@ class SubSpell(Packet):
 		self.source = source
 		self.target_count = target_count
 		self.ended = False
-		self.source = None
 		self.targets = []
 		self.packets = []
 

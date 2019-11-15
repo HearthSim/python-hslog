@@ -407,7 +407,7 @@ def test_sub_spell_battlegrounds():
 	assert sub_spell_packet.spell_prefab_guid == (
 		"Bacon_FreezeMinions_AE_Super.prefab:49de73d8b72602f47994a795a78f050d"
 	)
-	assert sub_spell_packet.source is None
+	assert sub_spell_packet.source == 0
 	assert sub_spell_packet.target_count == 0
 	assert sub_spell_packet.targets == []
 
