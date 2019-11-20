@@ -47,7 +47,10 @@ class PlayerManager:
 				# Maybe we can figure the name out right there and then
 				other_player = self.get_player_by_name(self._registered_names[0])
 				id = 3 if other_player == 2 else 2
-				self.register_player_name(name, id)
+				try:
+					self.register_player_name(name, id)
+				except KeyError:
+					raise ParsingError("Unseen player name %r" % (name))
 			elif len(self._registered_names) > 1 and self.ai_player:
 				# If we are registering our 3rd (or more) name, and we are in an AI game...
 				# then it's probably the innkeeper with a new name.
