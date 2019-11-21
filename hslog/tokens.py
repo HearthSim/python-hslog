@@ -9,7 +9,7 @@ ENTITY_RE = re.compile("\[.*\s*id=(\d+)\s*.*\]")
 
 # Line format
 TIMESTAMP_POWERLOG_FORMAT = r"%H:%M:%S.%f"
-TIMESTAMP_RE = re.compile(r"^(D|W) ([\d:.]+) (.+)$")
+TIMESTAMP_RE = re.compile(r"^(D|W|E) ([\d:.]+) (.+)$")
 POWERLOG_LINE_RE = re.compile(r"([^(]+)\(\) - (.+)$")
 OUTPUTLOG_LINE_RE = re.compile(r"\[Power\] ()([^(]+)\(\) - (.+)$")
 

@@ -204,6 +204,16 @@ def test_warn_level():
 	parser.flush()
 
 
+def test_error_level():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.flush()
+
+	line = u"E 02:08:13.8318679 SubSpellController {...}"
+	parser.read(StringIO(line))
+	parser.flush()
+
+
 def test_empty_tasklist():
 	parser = LogParser()
 	parser.read(StringIO(data.INITIAL_GAME))
