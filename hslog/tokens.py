@@ -5,13 +5,12 @@ import re
 GAME_ENTITY = "GameEntity"
 UNKNOWN_HUMAN_PLAYER = "UNKNOWN HUMAN PLAYER"
 _E = r"(%s|%s|\[.+\]|\d+|.+)" % (GAME_ENTITY, UNKNOWN_HUMAN_PLAYER)
-ENTITY_RE = re.compile("\[.*\s*id=(\d+)\s*.*\]")
+ENTITY_RE = re.compile(r"\[.*\s*id=(\d+)\s*.*\]")
 
 # Line format
 TIMESTAMP_POWERLOG_FORMAT = r"%H:%M:%S.%f"
-TIMESTAMP_RE = re.compile(r"^(D|W|E) ([\d:.]+) (.+)$")
+TIMESTAMP_RE = re.compile(r"^([DWE]) ([\d:.]+) (.+)$")
 POWERLOG_LINE_RE = re.compile(r"([^(]+)\(\) - (.+)$")
-OUTPUTLOG_LINE_RE = re.compile(r"\[Power\] ()([^(]+)\(\) - (.+)$")
 
 # Game / Player
 GAME_ENTITY_RE = re.compile(r"GameEntity EntityID=(\d+)")
