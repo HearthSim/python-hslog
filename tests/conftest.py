@@ -18,7 +18,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
-	if config.getoption("regression_suite") and not os.path.exists(LOG_DATA_DIR):
+	if not os.path.exists(LOG_DATA_DIR):
 		proc = subprocess.Popen(["git", "clone", LOG_DATA_GIT, LOG_DATA_DIR])
 		assert proc.wait() == 0
 	config.addinivalue_line(
