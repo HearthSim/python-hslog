@@ -7,9 +7,6 @@ env:
   - TOXENV=py36
   - TOXENV=flake8
 
-matrix:
-  fast_finish: true
-
 install:
   - pip install --upgrade pip setuptools wheel
   - pip install tox
@@ -23,6 +20,7 @@ stages:
     if: tag IS present
 
 jobs:
+  fast_finish: true
   include:
     - stage: deploy
       install:
