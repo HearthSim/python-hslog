@@ -97,6 +97,93 @@ class BaseExporter:
 			self.export_packet(p)
 
 
+class CompositeExporter(BaseExporter):
+	"""Exporter implementation that broadcasts packets to configured child exporters
+
+	Use this class to compose multiple exporters in order to do a single pass over a
+	configured packet tree. Note:
+
+	- Packet trees passed to constructors of child exporters will be ignored; only the
+	packets in the packet tree passed to this class's constructor will be visited.
+	- Unlike BaseExporter, the `handle_block` and `handle_sub_spell` methods on this class
+	do not recursively invoke the `handle_packet` on child packets; child exporters used in
+	an instance of CompositeExporter *should* continue to recursively invoke `handle_packet`
+	however (or delegate to their superclass implementation).
+	"""
+
+	def __init__(self, packet_tree, exporters):
+		super().__init__(packet_tree)
+		self.exporters = exporters
+
+	def handle_create_game(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_create_game(packet)
+
+	def handle_player(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_player(packet)
+
+	def handle_block(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_block(packet)
+
+	def handle_full_entity(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_full_entity(packet)
+
+	def handle_hide_entity(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_hide_entity(packet)
+
+	def handle_show_entity(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_show_entity(packet)
+
+	def handle_change_entity(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_change_entity(packet)
+
+	def handle_tag_change(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_tag_change(packet)
+
+	def handle_metadata(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_metadata(packet)
+
+	def handle_choices(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_choices(packet)
+
+	def handle_send_choices(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_send_choices(packet)
+
+	def handle_chosen_entities(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_chosen_entities(packet)
+
+	def handle_options(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_options(packet)
+
+	def handle_option(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_option(packet)
+
+	def handle_send_option(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_send_option(packet)
+
+	def handle_reset_game(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_reset_game(packet)
+
+	def handle_sub_spell(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_sub_spell(packet)
+
+
 class EntityTreeExporter(BaseExporter):
 	game_class = Game
 	player_class = Player
