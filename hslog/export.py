@@ -29,6 +29,7 @@ class BaseExporter:
 			packets.SendOption: self.handle_send_option,
 			packets.ResetGame: self.handle_reset_game,
 			packets.SubSpell: self.handle_sub_spell,
+			packets.CachedTagForDormantChange: self.handle_cached_tag_for_dormant_change
 		}
 
 	def export(self):
@@ -95,6 +96,9 @@ class BaseExporter:
 	def handle_sub_spell(self, packet):
 		for p in packet.packets:
 			self.export_packet(p)
+
+	def handle_cached_tag_for_dormant_change(self, packet):
+		pass
 
 
 class CompositeExporter(BaseExporter):
@@ -182,6 +186,10 @@ class CompositeExporter(BaseExporter):
 	def handle_sub_spell(self, packet):
 		for exporter in self.exporters:
 			exporter.handle_sub_spell(packet)
+
+	def handle_cached_tag_for_dormant_change(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_cached_tag_for_dormant_change(packet)
 
 
 class EntityTreeExporter(BaseExporter):

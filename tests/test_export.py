@@ -28,11 +28,15 @@ class LoggingExporter(BaseExporter):
 		self.handle_show_entity_calls = 0
 		self.handle_sub_spell_calls = 0
 		self.handle_tag_change_calls = 0
+		self.handle_cached_tag_for_dormant_change_calls = 0
 
 	def handle_block(self, packet):
 		super().handle_block(packet)
 
 		self.handle_block_calls += 1
+
+	def handle_cached_tag_for_dormant_change(self, packet):
+		self.handle_cached_tag_for_dormant_change_calls += 1
 
 	def handle_chosen_entities(self, packet):
 		self.handle_chosen_entities_calls += 1
@@ -96,6 +100,16 @@ class TestCompositeExporter:
 
 		assert exporter1.handle_block_calls == 1
 		assert exporter2.handle_block_calls == 1
+
+	def test_handle_cached_tag_for_dormant_change(self):
+		exporter1 = LoggingExporter(None)
+		exporter2 = LoggingExporter(None)
+
+		composite_exporter = CompositeExporter(None, [exporter1, exporter2])
+		composite_exporter.handle_cached_tag_for_dormant_change(None)
+
+		assert exporter1.handle_cached_tag_for_dormant_change_calls == 1
+		assert exporter2.handle_cached_tag_for_dormant_change_calls == 1
 
 	def test_handle_chosen_entities(self):
 		exporter1 = LoggingExporter(None)

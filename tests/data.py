@@ -190,3 +190,13 @@ D 08:59:23.0098315 GameState.DebugPrintPower() -         SUB_SPELL_END
 D 08:59:23.0098315 GameState.DebugPrintPower() -     BLOCK_END
 D 08:59:23.0098315 GameState.DebugPrintPower() - BLOCK_END
 """.strip()
+
+
+CACHED_TAG_FOR_DORMANT_CHANGE = """
+D 21:56:48.2304744 GameState.DebugPrintPower() -         CACHED_TAG_FOR_DORMANT_CHANGE Entity=[entityName=Selfless Hero id=417 zone=PLAY zonePos=1 cardId=OG_221 player=13] tag=DEATHRATTLE value=1
+""".strip()
+
+
+CACHED_TAG_FOR_DORMANT_CHANGE_SHORT_ENTITY = """
+D 21:57:20.2521013 GameState.DebugPrintPower() -         CACHED_TAG_FOR_DORMANT_CHANGE Entity=593 tag=DEATHRATTLE value=1
+""".strip()

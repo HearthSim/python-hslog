@@ -444,3 +444,33 @@ def test_options_missing_block_end():
 
 	options_packet = packet_tree.packets[-1]
 	assert isinstance(options_packet, packets.Options)
+
+
+def test_cached_tag_for_dormant_change():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.CACHED_TAG_FOR_DORMANT_CHANGE))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+
+	cached_tag_packet = packet_tree.packets[1]
+
+	assert cached_tag_packet.entity == 417
+	assert cached_tag_packet.tag == GameTag.DEATHRATTLE
+	assert cached_tag_packet.value == 1
+
+
+def test_cached_tag_for_dormant_change_entity_id_only():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.CACHED_TAG_FOR_DORMANT_CHANGE_SHORT_ENTITY))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+
+	cached_tag_packet = packet_tree.packets[1]
+
+	assert cached_tag_packet.entity == 593
+	assert cached_tag_packet.tag == GameTag.DEATHRATTLE
+	assert cached_tag_packet.value == 1

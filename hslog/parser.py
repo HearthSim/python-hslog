@@ -219,6 +219,11 @@ class PowerHandler:
 			regex, callback = tokens.SUB_SPELL_START_RE, self.sub_spell_start
 		elif opcode == "SUB_SPELL_END":
 			regex, callback = tokens.SUB_SPELL_END_RE, self.sub_spell_end
+		elif opcode == "CACHED_TAG_FOR_DORMANT_CHANGE":
+			regex, callback = (
+				tokens.CACHED_TAG_FOR_DORMANT_CHANGE_RE,
+				self.cached_tag_for_dormant_change
+			)
 		else:
 			raise NotImplementedError(data)
 
@@ -357,6 +362,14 @@ class PowerHandler:
 		sub_spell = self.current_block
 		self.current_block = self.current_block.parent
 		return sub_spell
+
+	def cached_tag_for_dormant_change(self, ts, e, tag, value):
+		id = self.parse_entity_id(e)
+		tag, value = parse_tag(tag, value)
+
+		packet = packets.CachedTagForDormantChange(ts, id, tag, value)
+		self.register_packet(packet)
+		return packet
 
 
 class OptionsHandler:

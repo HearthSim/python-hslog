@@ -269,3 +269,13 @@ class SubSpell(Packet):
 
 	def end(self):
 		self.ended = True
+
+
+class CachedTagForDormantChange(Packet):
+	power_type = PowerType.CACHED_TAG_FOR_DORMANT_CHANGE
+
+	def __init__(self, ts, entity, tag, value):
+		self.ts = ts
+		self.entity = entity
+		self.tag = tag
+		self.value = value

@@ -35,6 +35,7 @@ META_DATA_RE = re.compile(r"META_DATA - Meta=(\w+) Data=%s InfoCount=(\d+)" % _E
 RESET_GAME_RE = re.compile(r"RESET_GAME$")
 SUB_SPELL_START_RE = re.compile(r"SUB_SPELL_START - SpellPrefabGUID=([\w:.]+) Source=(\d+) TargetCount=(\d+)$")
 SUB_SPELL_END_RE = re.compile(r"SUB_SPELL_END$")
+CACHED_TAG_FOR_DORMANT_CHANGE_RE = re.compile(r"CACHED_TAG_FOR_DORMANT_CHANGE Entity=%s tag=(\w+) value=(\w+)" % _E)
 
 # Message details
 TAG_VALUE_RE = re.compile(r"tag=(\w+) value=(\w+)")
