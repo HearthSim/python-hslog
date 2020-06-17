@@ -12,6 +12,7 @@ class LoggingExporter(BaseExporter):
 		super().__init__(packet_tree)
 
 		self.handle_block_calls = 0
+		self.handle_cached_tag_for_dormant_change_calls = 0
 		self.handle_chosen_entities_calls = 0
 		self.handle_choices_calls = 0
 		self.handle_change_entity_calls = 0
@@ -28,7 +29,7 @@ class LoggingExporter(BaseExporter):
 		self.handle_show_entity_calls = 0
 		self.handle_sub_spell_calls = 0
 		self.handle_tag_change_calls = 0
-		self.handle_cached_tag_for_dormant_change_calls = 0
+		self.handle_vo_spell_calls = 0
 
 	def handle_block(self, packet):
 		super().handle_block(packet)
@@ -87,6 +88,9 @@ class LoggingExporter(BaseExporter):
 
 	def handle_tag_change(self, packet):
 		self.handle_tag_change_calls += 1
+
+	def handle_vo_spell(self, packet):
+		self.handle_vo_spell_calls += 1
 
 
 class TestCompositeExporter:
@@ -270,6 +274,16 @@ class TestCompositeExporter:
 
 		assert exporter1.handle_tag_change_calls == 1
 		assert exporter2.handle_tag_change_calls == 1
+
+	def test_handle_vo_spell(self):
+		exporter1 = LoggingExporter(None)
+		exporter2 = LoggingExporter(None)
+
+		composite_exporter = CompositeExporter(None, [exporter1, exporter2])
+		composite_exporter.handle_vo_spell(None)
+
+		assert exporter1.handle_vo_spell_calls == 1
+		assert exporter2.handle_vo_spell_calls == 1
 
 
 class TestFriendlyPlayerExporter:

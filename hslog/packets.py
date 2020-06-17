@@ -279,3 +279,14 @@ class CachedTagForDormantChange(Packet):
 		self.entity = entity
 		self.tag = tag
 		self.value = value
+
+
+class VOSpell(Packet):
+	power_type = PowerType.VO_SPELL
+
+	def __init__(self, ts, brguid, vospguid, blocking, delayms):
+		self.ts = ts
+		self.brguid = brguid
+		self.vospguid = vospguid
+		self.blocking = blocking
+		self.delayms = delayms

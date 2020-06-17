@@ -200,3 +200,8 @@ D 21:56:48.2304744 GameState.DebugPrintPower() -         CACHED_TAG_FOR_DORMANT_
 CACHED_TAG_FOR_DORMANT_CHANGE_SHORT_ENTITY = """
 D 21:57:20.2521013 GameState.DebugPrintPower() -         CACHED_TAG_FOR_DORMANT_CHANGE Entity=593 tag=DEATHRATTLE value=1
 """.strip()
+
+
+VO_SPELL = """
+D 20:02:31.8466584 GameState.DebugPrintPower() -     VO_SPELL - BrassRingGuid=VO_BTA_BOSS_07h2_Female_NightElf_Mission_Fight_07_PlayerStart_01.prefab:616c9e57bb7fce54684e26be50462d17 - VoSpellPrefabGUID= - Blocking=True - AdditionalDelayInMs=1000
+""".strip()

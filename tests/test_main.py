@@ -474,3 +474,22 @@ def test_cached_tag_for_dormant_change_entity_id_only():
 	assert cached_tag_packet.entity == 593
 	assert cached_tag_packet.tag == GameTag.DEATHRATTLE
 	assert cached_tag_packet.value == 1
+
+
+def test_vo_spell_only():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.VO_SPELL))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+
+	vo_spell_packet = packet_tree.packets[1]
+
+	assert vo_spell_packet.brguid == (
+		"VO_BTA_BOSS_07h2_Female_NightElf_Mission_Fight_07_PlayerStart_01.prefab:616c9e5" +
+		"7bb7fce54684e26be50462d17"
+	)
+	assert vo_spell_packet.vospguid == ""
+	assert vo_spell_packet.blocking is True
+	assert vo_spell_packet.delayms == 1000

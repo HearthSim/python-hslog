@@ -159,3 +159,14 @@ def test_cached_tag_for_dormant_change(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	exporter.export()
 	assert True
+
+
+@pytest.mark.regression_suite
+def test_vo_spell(parser):
+	with open(logfile("49534_vo_spell.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True

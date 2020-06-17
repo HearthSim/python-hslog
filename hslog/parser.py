@@ -224,6 +224,8 @@ class PowerHandler:
 				tokens.CACHED_TAG_FOR_DORMANT_CHANGE_RE,
 				self.cached_tag_for_dormant_change
 			)
+		elif opcode == "VO_SPELL":
+			regex, callback = tokens.VO_SPELL_RE, self.vo_spell
 		else:
 			raise NotImplementedError(data)
 
@@ -368,6 +370,11 @@ class PowerHandler:
 		tag, value = parse_tag(tag, value)
 
 		packet = packets.CachedTagForDormantChange(ts, id, tag, value)
+		self.register_packet(packet)
+		return packet
+
+	def vo_spell(self, ts, brguid, vospguid, blocking, delayms):
+		packet = packets.VOSpell(ts, brguid, vospguid, blocking == "True", int(delayms))
 		self.register_packet(packet)
 		return packet
 
