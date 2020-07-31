@@ -27,6 +27,7 @@ class LoggingExporter(BaseExporter):
 		self.handle_send_choices_calls = 0
 		self.handle_send_option_calls = 0
 		self.handle_show_entity_calls = 0
+		self.handle_shuffle_deck_calls = 0
 		self.handle_sub_spell_calls = 0
 		self.handle_tag_change_calls = 0
 		self.handle_vo_spell_calls = 0
@@ -80,6 +81,9 @@ class LoggingExporter(BaseExporter):
 
 	def handle_show_entity(self, packet):
 		self.handle_show_entity_calls += 1
+
+	def handle_shuffle_deck(self, packet):
+		self.handle_shuffle_deck_calls += 1
 
 	def handle_sub_spell(self, packet):
 		super().handle_sub_spell(packet)
@@ -254,6 +258,16 @@ class TestCompositeExporter:
 
 		assert exporter1.handle_show_entity_calls == 1
 		assert exporter2.handle_show_entity_calls == 1
+
+	def test_handle_shuffle_deck(self):
+		exporter1 = LoggingExporter(None)
+		exporter2 = LoggingExporter(None)
+
+		composite_exporter = CompositeExporter(None, [exporter1, exporter2])
+		composite_exporter.handle_shuffle_deck(None)
+
+		assert exporter1.handle_shuffle_deck_calls == 1
+		assert exporter2.handle_shuffle_deck_calls == 1
 
 	def test_handle_sub_spell(self):
 		exporter1 = LoggingExporter(None)

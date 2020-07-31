@@ -37,6 +37,7 @@ SUB_SPELL_START_RE = re.compile(r"SUB_SPELL_START - SpellPrefabGUID=([\w:.]+) So
 SUB_SPELL_END_RE = re.compile(r"SUB_SPELL_END$")
 CACHED_TAG_FOR_DORMANT_CHANGE_RE = re.compile(r"CACHED_TAG_FOR_DORMANT_CHANGE Entity=%s tag=(\w+) value=(\w+)" % _E)
 VO_SPELL_RE = re.compile(r"VO_SPELL - BrassRingGuid=(.*) - VoSpellPrefabGUID=(\w*)? - Blocking=(True|False) - AdditionalDelayInMs=(\d+)$")
+SHUFFLE_DECK_RE = re.compile(r"SHUFFLE_DECK PlayerID=(\d+)$")
 
 # Message details
 TAG_VALUE_RE = re.compile(r"tag=(\w+) value=(\w+)")

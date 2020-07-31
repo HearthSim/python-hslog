@@ -226,6 +226,8 @@ class PowerHandler:
 			)
 		elif opcode == "VO_SPELL":
 			regex, callback = tokens.VO_SPELL_RE, self.vo_spell
+		elif opcode == "SHUFFLE_DECK":
+			regex, callback = tokens.SHUFFLE_DECK_RE, self.shuffle_deck
 		else:
 			raise NotImplementedError(data)
 
@@ -375,6 +377,11 @@ class PowerHandler:
 
 	def vo_spell(self, ts, brguid, vospguid, blocking, delayms):
 		packet = packets.VOSpell(ts, brguid, vospguid, blocking == "True", int(delayms))
+		self.register_packet(packet)
+		return packet
+
+	def shuffle_deck(self, ts, player_id):
+		packet = packets.ShuffleDeck(ts, int(player_id))
 		self.register_packet(packet)
 		return packet
 

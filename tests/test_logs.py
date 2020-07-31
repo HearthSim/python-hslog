@@ -170,3 +170,14 @@ def test_vo_spell(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	exporter.export()
 	assert True
+
+
+@pytest.mark.regression_suite
+def test_shuffle_deck(parser):
+	with open(logfile("54613_shuffle_deck.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True

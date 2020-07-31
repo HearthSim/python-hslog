@@ -493,3 +493,16 @@ def test_vo_spell_only():
 	assert vo_spell_packet.vospguid == ""
 	assert vo_spell_packet.blocking is True
 	assert vo_spell_packet.delayms == 1000
+
+
+def test_shuffle_deck_only():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+	parser.read(StringIO(data.SHUFFLE_DECK))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+
+	shuffle_deck_packet = packet_tree.packets[1]
+
+	assert shuffle_deck_packet.player_id == 2

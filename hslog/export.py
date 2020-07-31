@@ -30,7 +30,8 @@ class BaseExporter:
 			packets.ResetGame: self.handle_reset_game,
 			packets.SubSpell: self.handle_sub_spell,
 			packets.CachedTagForDormantChange: self.handle_cached_tag_for_dormant_change,
-			packets.VOSpell: self.handle_vo_spell
+			packets.VOSpell: self.handle_vo_spell,
+			packets.ShuffleDeck: self.handle_shuffle_deck
 		}
 
 	def export(self):
@@ -102,6 +103,9 @@ class BaseExporter:
 		pass
 
 	def handle_vo_spell(self, packet):
+		pass
+
+	def handle_shuffle_deck(self, packet):
 		pass
 
 
@@ -198,6 +202,10 @@ class CompositeExporter(BaseExporter):
 	def handle_vo_spell(self, packet):
 		for exporter in self.exporters:
 			exporter.handle_vo_spell(packet)
+
+	def handle_shuffle_deck(self, packet):
+		for exporter in self.exporters:
+			exporter.handle_shuffle_deck(packet)
 
 
 class EntityTreeExporter(BaseExporter):

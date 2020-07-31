@@ -205,3 +205,8 @@ D 21:57:20.2521013 GameState.DebugPrintPower() -         CACHED_TAG_FOR_DORMANT_
 VO_SPELL = """
 D 20:02:31.8466584 GameState.DebugPrintPower() -     VO_SPELL - BrassRingGuid=VO_BTA_BOSS_07h2_Female_NightElf_Mission_Fight_07_PlayerStart_01.prefab:616c9e57bb7fce54684e26be50462d17 - VoSpellPrefabGUID= - Blocking=True - AdditionalDelayInMs=1000
 """.strip()
+
+
+SHUFFLE_DECK = """
+D 17:21:14.4464414 GameState.DebugPrintPower() -     SHUFFLE_DECK PlayerID=2
+""".strip()

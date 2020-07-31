@@ -290,3 +290,11 @@ class VOSpell(Packet):
 		self.vospguid = vospguid
 		self.blocking = blocking
 		self.delayms = delayms
+
+
+class ShuffleDeck(Packet):
+	power_type = PowerType.SHUFFLE_DECK
+
+	def __init__(self, ts, player_id):
+		self.ts = ts
+		self.player_id = player_id
