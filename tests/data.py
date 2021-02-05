@@ -163,6 +163,13 @@ D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityNa
 D 14:43:59.9999997 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Bonemare id=25 zone=HAND zonePos=2 cardId=ICC_705 player=1] tag=ZONE_POSITION value=0
 """.strip()
 
+REPEATED_TIMESTAMP = """
+D 02:59:14.6492595 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=Bonemare id=25 zone=HAND zonePos=2 cardId=ICC_705 player=1] EffectCardId= EffectIndex=0 Target=[entityName=Spellbreaker id=32 zone=PLAY zonePos=1 cardId=EX1_048 player=1] SubOption=-1
+D 02:59:14.6492595 GameState.DebugPrintPower() - BLOCK_END
+D 02:59:14.6492595 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=Bonemare id=25 zone=HAND zonePos=2 cardId=ICC_705 player=1] EffectCardId= EffectIndex=0 Target=[entityName=Spellbreaker id=32 zone=PLAY zonePos=1 cardId=EX1_048 player=1] SubOption=-1
+D 02:59:14.6492595 GameState.DebugPrintPower() - BLOCK_END
+""".strip()
+
 SUB_SPELL_BLOCK = """
 D 23:58:17.9818688 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=UNKNOWN ENTITY [cardType=INVALID] id=80 zone=HAND zonePos=4 cardId= player=2] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 
 D 23:58:17.9828680 GameState.DebugPrintPower() -     BLOCK_START BlockType=POWER Entity=[entityName=UNKNOWN ENTITY [cardType=INVALID] id=80 zone=HAND zonePos=4 cardId= player=2] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 

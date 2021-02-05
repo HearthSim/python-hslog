@@ -1,8 +1,9 @@
 from datetime import datetime, time, timedelta
 from io import StringIO
+from unittest.mock import patch
 
 import pytest
-from aniso8601 import parse_datetime
+from aniso8601 import parse_datetime, parse_time
 from hearthstone.enums import (
 	CardType, ChoiceType, GameTag, OptionType,
 	PlayReq, PlayState, PowerType, State, Step, Zone
@@ -161,6 +162,21 @@ def test_timestamp_parsing():
 	assert ts.second == 14
 	assert ts.tzinfo
 	assert ts.utcoffset() == timedelta(hours=2)
+
+
+def test_repeated_timestamps():
+	parser = LogParser()
+	parser._current_date = parse_datetime("2015-01-01T02:58:00+0200")
+
+	parser.read(StringIO(data.INITIAL_GAME))
+
+	with patch("hslog.parser.parse_time", wraps=parse_time) as spy:
+		parser.read(StringIO(data.REPEATED_TIMESTAMP))
+	spy.assert_called_once()  # The same repeated timestamp should only be parsed once
+
+	ts1 = parser.games[0].packets[-1].ts
+	ts2 = parser.games[0].packets[-2].ts
+	assert ts1 == ts2
 
 
 def test_unroundable_timestamp():

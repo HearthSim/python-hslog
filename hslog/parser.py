@@ -687,8 +687,12 @@ class LogParser(
 		self._game_state_processor = "GameState"
 		self._current_date = None
 		self._synced_timestamp = False
+		self._last_ts = None
 
 	def parse_timestamp(self, ts, method):
+		if self._last_ts is not None and self._last_ts[0] == ts:
+			return self._last_ts[1]
+
 		ret = parse_time(ts)
 
 		if not self._synced_timestamp:
@@ -706,6 +710,7 @@ class LogParser(
 
 		# Logs don't have dates :(
 		if self._current_date is None:
+			self._last_ts = (ts, ret)
 			# No starting date is available. Return just the time.
 			return ret
 
@@ -716,6 +721,7 @@ class LogParser(
 			# means we rolled over and need to increment the day by 1.
 			ret += timedelta(days=1)
 		self._current_date = ret
+		self._last_ts = (ts, ret)
 		return ret
 
 	def read(self, fp):
