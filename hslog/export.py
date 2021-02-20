@@ -37,6 +37,7 @@ class BaseExporter:
 	def export(self):
 		for packet in self.packet_tree:
 			self.export_packet(packet)
+		self.flush()
 		return self
 
 	def export_packet(self, packet):
@@ -45,6 +46,10 @@ class BaseExporter:
 		if not handler:
 			raise NotImplementedError("Don't know how to export %r" % (packet_type))
 		handler(packet)
+
+	def flush(self):
+		"""Finalize the export and allow any intermediate state to be cleaned up."""
+		pass
 
 	def handle_create_game(self, packet):
 		pass
@@ -126,6 +131,10 @@ class CompositeExporter(BaseExporter):
 	def __init__(self, packet_tree, exporters):
 		super().__init__(packet_tree)
 		self.exporters = exporters
+
+	def flush(self):
+		for exporter in self.exporters:
+			exporter.flush()
 
 	def handle_create_game(self, packet):
 		for exporter in self.exporters:

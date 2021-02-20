@@ -11,6 +11,7 @@ class LoggingExporter(BaseExporter):
 	def __init__(self, packet_tree):
 		super().__init__(packet_tree)
 
+		self.flush_calls = 0
 		self.handle_block_calls = 0
 		self.handle_cached_tag_for_dormant_change_calls = 0
 		self.handle_chosen_entities_calls = 0
@@ -31,6 +32,11 @@ class LoggingExporter(BaseExporter):
 		self.handle_sub_spell_calls = 0
 		self.handle_tag_change_calls = 0
 		self.handle_vo_spell_calls = 0
+
+	def flush(self):
+		super().flush()
+
+		self.flush_calls += 1
 
 	def handle_block(self, packet):
 		super().handle_block(packet)
@@ -98,6 +104,16 @@ class LoggingExporter(BaseExporter):
 
 
 class TestCompositeExporter:
+
+	def test_flush(self):
+		exporter1 = LoggingExporter(None)
+		exporter2 = LoggingExporter(None)
+
+		composite_exporter = CompositeExporter(None, [exporter1, exporter2])
+		composite_exporter.flush()
+
+		assert exporter1.flush_calls == 1
+		assert exporter2.flush_calls == 1
 
 	def test_handle_block(self):
 		exporter1 = LoggingExporter(None)
