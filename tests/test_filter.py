@@ -16,21 +16,21 @@ class TestBattlegroundsLogFilter:
 
     def test_attacks_minion(self):
         attack1 = StringIO(
-            "D 00:14:49.3366557 GameState.DebugPrintPower() -     " 
+            "D 00:14:49.3366557 GameState.DebugPrintPower() -     "
             "BLOCK_START BlockType=ATTACK Entity=[entityName=Dachowiec id=345 zone=PLAY "
             "zonePos=1 cardId=CFM_315 player=16] "
             "EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=0 "
             "Target=0 SubOption=-1\n"
-            
+
             "D 00:14:49.3366557 GameState.DebugPrintPower() -         BLOCK_START "
             "BlockType=TRIGGER Entity=[entityName=BaconShop8PlayerEnchant id=71 zone=PLAY "
             "zonePos=0 cardId=TB_BaconShop_8P_PlayerE player=8] "
             "EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=10 "
             "Target=0 SubOption=-1 TriggerKeyword=TAG_NOT_SET\n"
-                           
+
             "D 00:14:49.3366557 GameState.DebugPrintPower() -             TAG_CHANGE "
             "Entity=Starluki#2943 tag=1481 value=2 \n"
-            
+
             "D 00:14:49.3366557 GameState.DebugPrintPower() -         BLOCK_END\n"
             "D 00:14:49.3366557 GameState.DebugPrintPower() -     BLOCK_END\n"
         )
@@ -78,10 +78,10 @@ class TestBattlegroundsLogFilter:
     def test_options(self):
         options = StringIO(
             "D 00:14:02.2116755 GameState.DebugPrintOptions() - id=1\n"
-            
+
             "D 00:14:02.2116755 GameState.DebugPrintOptions() -   option 0 type=END_TURN "
             "mainEntity= error=INVALID errorParam=\n"
-            
+
             "D 00:14:02.2116755 GameState.DebugPrintOptions() -   option 1 type=POWER "
             "mainEntity=[entityName=Odśwież id=239 zone=PLAY zonePos=0 "
             "cardId=TB_BaconShop_8p_Reroll_Button player=8] error=NONE errorParam=\n"
