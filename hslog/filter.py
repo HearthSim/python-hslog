@@ -1,4 +1,4 @@
-from collections import Iterable
+from collections.abc import Iterable
 from typing import IO, List, Optional, Tuple, Union
 
 from hearthstone.enums import GameTag
