@@ -1,8 +1,10 @@
 from typing import Optional, List, Union, IO
 
+from hearthstone.enums import GameTag
+
 from hslog import tokens
 from hslog.exceptions import RegexParsingError
-
+from hslog.utils import parse_tag
 
 BLACKLISTED_TAGS = [
     "EXHAUSTED",
@@ -12,6 +14,33 @@ BLACKLISTED_TAGS = [
     "NUM_ATTACKS_THIS_TURN",
     "NUM_TURNS_IN_PLAY",
     "TECH_LEVEL",
+]
+
+BLACKLISTED_FULL_ENTITY_TAGS = [
+    GameTag.BACON_ACTION_CARD,
+    GameTag.BATTLECRY,
+    GameTag.CARDRACE,
+    GameTag.COST,
+    GameTag.EXHAUSTED,
+    GameTag.FACTION,
+    GameTag.GAME_MODE_BUTTON_SLOT,
+    GameTag.HIDE_WATERMARK,
+    GameTag.IS_BACON_POOL_MINION,
+    GameTag.MODULAR,
+    GameTag.MOVE_MINION_HOVER_TARGET_SLOT,
+    GameTag.OVERKILL,
+    GameTag.RARITY,
+    GameTag.SPAWN_TIME_COUNT,
+    GameTag.SUPPRESS_ALL_SUMMON_VO,
+    GameTag.TAG_LAST_KNOWN_COST_IN_HAND,
+    GameTag.TAG_SCRIPT_DATA_NUM_1,
+    GameTag.TAG_SCRIPT_DATA_NUM_2,
+    GameTag.TECH_LEVEL,
+    GameTag.TRIGGER_VISUAL
+]
+
+BLACKLISTED_SHOW_ENTITY_TAGS = [
+    GameTag.ENCHANTMENT_INVISIBLE
 ]
 
 
@@ -34,6 +63,18 @@ class BattlegroundsLogFilter:
         self._current_buffer = None
         self._flushed_lines = []
 
+    def _buffering_entity(self):
+        return (
+            self._current_buffer is not None and
+            self._current_buffer.buffer_type in ["FULL_ENTITY", "SHOW_ENTITY"]
+        )
+
+    def _emit_line(self, line):
+        if self._current_buffer:
+            self._current_buffer.buffer.append(line)
+        else:
+            self._flushed_lines.append(line)
+
     def _flush_buffered_packets(self, buffer: Buffer, should_skip: bool = False):
         for buffered_item in buffer.buffer:
             if isinstance(buffered_item, Buffer):
@@ -45,6 +86,13 @@ class BattlegroundsLogFilter:
                         self._flushed_lines.append("X: " + buffered_item)
                 else:
                     self._flushed_lines.append(buffered_item)
+
+    def _parse_initial_tag(self, data):
+        sre = tokens.TAG_VALUE_RE.match(data)
+        if not sre:
+            raise RegexParsingError(data)
+        tag, value = sre.groups()
+        return parse_tag(tag, value)
 
     def _start_new_buffer(self, buffer_type: str, subtype: str):
         new_buffer = Buffer(buffer_type, subtype, parent=self._current_buffer)
@@ -133,19 +181,13 @@ class BattlegroundsLogFilter:
 
             level, ts, line_rest = sre.groups()
             if line_rest.startswith(tokens.SPECTATOR_MODE_TOKEN):
-                if self._current_buffer:
-                    self._current_buffer.buffer.append(line)
-                    continue
-                else:
-                    return line
+                self._emit_line(line)
+                continue
 
             sre = tokens.POWERLOG_LINE_RE.match(line_rest)
             if not sre:
-                if self._current_buffer:
-                    self._current_buffer.buffer.append(line)
-                    continue
-                else:
-                    return line
+                self._emit_line(line)
+                continue
 
             method, msg = sre.groups()
             msg = msg.strip()
@@ -154,6 +196,9 @@ class BattlegroundsLogFilter:
                 opcode = msg.split()[0]
 
                 if opcode == "BLOCK_START":
+                    if self._buffering_entity():
+                        self._end_buffer()
+
                     type, card_id = self._get_block_type_and_card_id(opcode, msg)
 
                     if self._current_buffer:
@@ -176,25 +221,61 @@ class BattlegroundsLogFilter:
                         if card_id == "TB_BaconShop_8P_PlayerE":
                             self._start_new_buffer("BLOCK", type)
 
-                    if self._current_buffer:
-                        if self._preserve_block_counter > 0:
-                            self._preserve_block_counter -= 1
+                    if self._preserve_block_counter > 0:
+                        self._preserve_block_counter -= 1
+                        if self._current_buffer:
                             self._current_buffer.should_skip = False
-                        self._current_buffer.buffer.append(line)
-                    else:
-                        if self._preserve_block_counter > 0:
-                            self._preserve_block_counter -= 1
 
-                        return line
+                    self._emit_line(line)
 
                 elif opcode == "BLOCK_END":
-                    if self._current_buffer:
-                        self._current_buffer.buffer.append(line)
+                    if self._buffering_entity():
                         self._end_buffer()
-                        continue
+
+                    self._emit_line(line)
+
+                    if self._current_buffer:
+                        self._end_buffer()
+
+                elif opcode in ["FULL_ENTITY", "SHOW_ENTITY"]:
+                    if self._buffering_entity():
+                        self._end_buffer()
+
+                    self._start_new_buffer(opcode, "")
+                    self._emit_line(line)
+
+                elif opcode.startswith("tag="):
+                    tag, value = self._parse_initial_tag(msg)
+
+                    if self._buffering_entity():
+                        if self._current_buffer.buffer_type == "FULL_ENTITY":
+                            if tag in BLACKLISTED_FULL_ENTITY_TAGS:
+                                self._start_new_buffer("__ENTITY_TAG", "")
+                                self._current_buffer.should_skip = True
+                                self._emit_line(line)
+                                self._end_buffer()
+                            else:
+                                self._emit_line(line)
+                        elif self._current_buffer.buffer_type == "SHOW_ENTITY":
+                            if (
+                                    tag in BLACKLISTED_FULL_ENTITY_TAGS or
+                                    tag in BLACKLISTED_SHOW_ENTITY_TAGS
+                            ):
+                                self._start_new_buffer("__ENTITY_TAG", "")
+                                self._current_buffer.should_skip = True
+                                self._emit_line(line)
+                                self._end_buffer()
+                            else:
+                                self._emit_line(line)
+                        else:
+                            self._emit_line(line)
                     else:
-                        return line
+                        self._emit_line(line)
+
                 elif opcode == "TAG_CHANGE":
+                    if self._buffering_entity():
+                        self._end_buffer()
+
                     tag, value = self._get_tag_change_tag_and_value(msg)
 
                     if (
@@ -208,8 +289,8 @@ class BattlegroundsLogFilter:
                             for i in range(len(self._current_buffer.buffer)):
                                 buffered_item = self._current_buffer.buffer[i]
                                 if (
-                                    isinstance(buffered_item, str) and
-                                    "TAG_CHANGE" in buffered_item
+                                        isinstance(buffered_item, str) and
+                                        "TAG_CHANGE" in buffered_item
                                 ):
                                     buf = Buffer("TAG_CHANGE", "", parent=self._current_buffer)
                                     buf.buffer.append(buffered_item)
@@ -225,30 +306,24 @@ class BattlegroundsLogFilter:
                             tag.isdigit() or
                             tag in BLACKLISTED_TAGS or
                             (
-                                self._current_buffer is not None and
-                                hasattr(self._current_buffer, "skip_tag_changes")
+                                    self._current_buffer is not None and
+                                    hasattr(self._current_buffer, "skip_tag_changes")
                             )
                     ):
                         self._start_new_buffer("TAG_CHANGE", "")
                         self._current_buffer.should_skip = True
-                        self._current_buffer.buffer.append(line)
+                        self._emit_line(line)
                         self._end_buffer()
-                    elif self._current_buffer:
-                        self._current_buffer.buffer.append(line)
                     else:
-                        return line
+                        self._emit_line(line)
+
                 else:
-                    if self._current_buffer:
-                        self._current_buffer.buffer.append(line)
-                    else:
-                        return line
+                    self._emit_line(line)
 
             elif method == "GameState.DebugPrintOptions":
-                block_end = f"{level} {ts} GameState.DebugPrintPower() - BLOCK_END\n"
-                if self._current_buffer:
-                    self._current_buffer.buffer.append(block_end)
-                else:
-                    self._flushed_lines.append(block_end)
+                if msg.startswith("id="):
+                    block_end = f"{level} {ts} GameState.DebugPrintPower() - BLOCK_END\n"
+                    self._emit_line(block_end)
 
                 if self._show_suppressed_lines:
                     suppressed_line = "X: " + line
@@ -257,7 +332,4 @@ class BattlegroundsLogFilter:
                     else:
                         return suppressed_line
             else:
-                if self._current_buffer:
-                    self._current_buffer.buffer.append(line)
-                else:
-                    return line
+                self._emit_line(line)
