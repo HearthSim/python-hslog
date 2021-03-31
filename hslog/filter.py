@@ -113,6 +113,9 @@ class BattlegroundsLogFilter(Iterable):
         self._current_buffer = None
         self._flushed_lines = []
 
+        self.num_lines_read = 0
+        self.num_lines_emitted = 0
+
     # Returns True if there's a current buffer which is buffering a FULL_ENTITY or
     # SHOW_ENTITY sequence of messages, False otherwise.
 
@@ -415,10 +418,7 @@ class BattlegroundsLogFilter(Iterable):
 
         if self._show_suppressed_lines:
             suppressed_line = "X: " + line
-            if self._flushed_lines:
-                self._flushed_lines.append(suppressed_line)
-            else:
-                return suppressed_line
+            self._flushed_lines.append(suppressed_line)
 
     # Predicate for detecting whether a specified card id is a BGS hero; this is a naive
     # implementation that may not work consistently!
@@ -458,11 +458,14 @@ class BattlegroundsLogFilter(Iterable):
             # First, return any lines that have been flushed to the flushed line list.
 
             if self._flushed_lines:
+                self.num_lines_emitted += 1
                 return self._flushed_lines.pop(0)
 
             line = self._fp.readline()
             if line == "":
                 raise StopIteration()
+
+            self.num_lines_read += 1
 
             sre = tokens.TIMESTAMP_RE.match(line)
             if not sre:

@@ -9,10 +9,17 @@ class TestBattlegroundsLogFilter:
         unknown_tag = "D 00:13:20.7502897 GameState.DebugPrintPower() -     " \
             "TAG_CHANGE Entity=22 tag=10 value=60"
 
-        assert list(BattlegroundsLogFilter(StringIO(unknown_tag))) == []
-        assert list(
-            BattlegroundsLogFilter(StringIO(unknown_tag), show_suppressed_lines=True)
-        ) == ["X: " + unknown_tag]
+        lf1 = BattlegroundsLogFilter(StringIO(unknown_tag))
+
+        assert list(lf1) == []
+        assert lf1.num_lines_read == 1
+        assert lf1.num_lines_emitted == 0
+
+        lf2 = BattlegroundsLogFilter(StringIO(unknown_tag), show_suppressed_lines=True)
+
+        assert list(lf2) == ["X: " + unknown_tag]
+        assert lf2.num_lines_read == 1
+        assert lf2.num_lines_emitted == 1
 
     def test_attacks_minion(self):
         attack1 = StringIO(
@@ -91,9 +98,11 @@ class TestBattlegroundsLogFilter:
             "cardId=TB_BaconShopLockAll_Button player=8] error=NONE errorParam=\n"
         )
 
-        assert list(BattlegroundsLogFilter(options)) == [
-            "D 00:14:02.2116755 GameState.DebugPrintPower() - BLOCK_END\n"
-        ]
+        lf = BattlegroundsLogFilter(options)
+
+        assert list(lf) == ["D 00:14:02.2116755 GameState.DebugPrintPower() - BLOCK_END\n"]
+        assert lf.num_lines_emitted == 1
+        assert lf.num_lines_read == 4
 
     def test_tag_change(self):
         unknown_tag = StringIO(
