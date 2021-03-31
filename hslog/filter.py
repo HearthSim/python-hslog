@@ -28,6 +28,7 @@ class BattlegroundsLogFilter:
 
     def __init__(self, fp: IO, show_suppressed_lines: bool = False):
         self._fp = fp
+        self._preserve_block_counter = 0
         self._show_suppressed_lines = show_suppressed_lines
 
         self._current_buffer = None
@@ -156,14 +157,16 @@ class BattlegroundsLogFilter:
                     type, card_id = self._get_block_type_and_card_id(opcode, msg)
 
                     if self._current_buffer:
-                        if self._current_buffer.buffer_type == "ATTACK":
+                        if self._current_buffer.subtype == "ATTACK":
                             if type == "TRIGGER" and card_id != "TB_BaconShop_8P_PlayerE":
                                 self._current_buffer.should_skip = False
-                        elif self._current_buffer.buffer_type == "DEATHS":
+                        elif self._current_buffer.subtype == "DEATHS":
                             self._current_buffer.should_skip = False
 
                     if type == "ATTACK":
-                        if not self._is_hero(card_id):
+                        if self._is_hero(card_id):
+                            self._preserve_block_counter = 4
+                        else:
                             self._start_new_buffer("BLOCK", type)
                             self._current_buffer.should_skip = True
                     elif type == "DEATHS":
@@ -174,9 +177,16 @@ class BattlegroundsLogFilter:
                             self._start_new_buffer("BLOCK", type)
 
                     if self._current_buffer:
+                        if self._preserve_block_counter > 0:
+                            self._preserve_block_counter -= 1
+                            self._current_buffer.should_skip = False
                         self._current_buffer.buffer.append(line)
                     else:
+                        if self._preserve_block_counter > 0:
+                            self._preserve_block_counter -= 1
+
                         return line
+
                 elif opcode == "BLOCK_END":
                     if self._current_buffer:
                         self._current_buffer.buffer.append(line)
@@ -189,27 +199,27 @@ class BattlegroundsLogFilter:
 
                     if (
                             self._current_buffer and
-                            self._current_buffer.subtype == "TRIGGER"
+                            self._current_buffer.subtype == "TRIGGER" and
+                            tag == "BOARD_VISUAL_STATE"
                     ):
-                        if tag == "BOARD_VISUAL_STATE":
-                            self._current_buffer.buffer.append(line)
+                        self._current_buffer.buffer.append(line)
 
-                            if value == "1" or value == "2":
-                                for i in range(len(self._current_buffer.buffer)):
-                                    buffered_item = self._current_buffer.buffer[i]
-                                    if (
-                                        isinstance(buffered_item, str) and
-                                        "TAG_CHANGE" in buffered_item
-                                    ):
-                                        buf = Buffer("TAG_CHANGE", "", parent=self._current_buffer)
-                                        buf.buffer.append(buffered_item)
-                                        buf.should_skip = True
-                                        self._current_buffer.buffer[i] = buf
+                        if value == "1" or value == "2":
+                            for i in range(len(self._current_buffer.buffer)):
+                                buffered_item = self._current_buffer.buffer[i]
+                                if (
+                                    isinstance(buffered_item, str) and
+                                    "TAG_CHANGE" in buffered_item
+                                ):
+                                    buf = Buffer("TAG_CHANGE", "", parent=self._current_buffer)
+                                    buf.buffer.append(buffered_item)
+                                    buf.should_skip = True
+                                    self._current_buffer.buffer[i] = buf
 
-                                if value == "2":
-                                    setattr(self._current_buffer, "skip_tag_changes", True)
+                            if value == "2":
+                                setattr(self._current_buffer, "skip_tag_changes", True)
 
-                                continue
+                            continue
 
                     if (
                             tag.isdigit() or
@@ -232,9 +242,20 @@ class BattlegroundsLogFilter:
                         self._current_buffer.buffer.append(line)
                     else:
                         return line
+
             elif method == "GameState.DebugPrintOptions":
+                block_end = f"{level} {ts} GameState.DebugPrintPower() - BLOCK_END\n"
+                if self._current_buffer:
+                    self._current_buffer.buffer.append(block_end)
+                else:
+                    self._flushed_lines.append(block_end)
+
                 if self._show_suppressed_lines:
-                    return "X: " + line
+                    suppressed_line = "X: " + line
+                    if self._flushed_lines:
+                        self._flushed_lines.append(suppressed_line)
+                    else:
+                        return suppressed_line
             else:
                 if self._current_buffer:
                     self._current_buffer.buffer.append(line)
