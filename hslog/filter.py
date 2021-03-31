@@ -388,8 +388,8 @@ class BattlegroundsLogFilter(Iterable):
                 tag.isdigit() or
                 tag in BLACKLISTED_TAGS or
                 (
-                        self._current_buffer is not None and
-                        hasattr(self._current_buffer, "skip_tag_changes")
+                    self._current_buffer is not None and
+                    hasattr(self._current_buffer, "skip_tag_changes")
                 )
         ):
             self._start_new_buffer("TAG_CHANGE", "")
