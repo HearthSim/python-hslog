@@ -628,6 +628,10 @@ class ChoicesHandler:
 			player = self.parse_entity_or_player(player)
 			if isinstance(player, LazyPlayer):
 				player.id = id
+				self._packets.manager.register_player_name_by_player_id(
+					player.name,
+					player.id
+				)
 			self._chosen_packet_count = int(count)
 			self._chosen_packet = packets.ChosenEntities(ts, player, id)
 			self.register_packet(self._chosen_packet)
