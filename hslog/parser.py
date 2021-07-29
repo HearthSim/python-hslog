@@ -626,6 +626,8 @@ class ChoicesHandler:
 			id, player, count = sre.groups()
 			id = int(id)
 			player = self.parse_entity_or_player(player)
+			if isinstance(player, LazyPlayer):
+				player.id = id
 			self._chosen_packet_count = int(count)
 			self._chosen_packet = packets.ChosenEntities(ts, player, id)
 			self.register_packet(self._chosen_packet)

@@ -181,3 +181,14 @@ def test_shuffle_deck(parser):
 	exporter = EntityTreeExporter(packet_tree)
 	exporter.export()
 	assert True
+
+
+@pytest.mark.regression_suite
+def test_async_player_names(parser):
+	with open(logfile("88998_async_player_name.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True
