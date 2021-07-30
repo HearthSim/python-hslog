@@ -58,6 +58,7 @@ SEND_CHOICES_CHOICE_RE = re.compile(r"id=(\d+) ChoiceType=(.+)$")
 SEND_CHOICES_ENTITIES_RE = re.compile(r"m_chosenEntities\[(\d+)\]=(\[.+\])$")
 ENTITIES_CHOSEN_RE = re.compile(r"id=(\d+) Player=%s EntitiesCount=(\d+)$" % _E)
 ENTITIES_CHOSEN_ENTITIES_RE = re.compile(r"Entities\[(\d+)\]=%s$" % _E)
+ENTITIES_CHOSEN_PLAYER_RE = re.compile(r"player=(\d+)")
 
 # Options
 OPTIONS_ENTITY_RE = re.compile(r"id=(\d+)$")
