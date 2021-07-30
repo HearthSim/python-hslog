@@ -103,9 +103,9 @@ class PlayerManager:
 		Registers a link between \a name and \a id.
 		Note that this does not support two different players with the same name.
 		"""
-		if name in self._players_by_name:
-			self._players_by_name[name].id = id
+		if name in self._unregistered_names:
 			self._unregistered_names.remove(name)
+
 		self._players_by_name[name] = id
 		lazy_player_by_id = self._players_by_id[id]
 		lazy_player_by_id.name = name
