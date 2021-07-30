@@ -84,6 +84,7 @@ class PowerHandler:
 			value = value.strip()
 			if key == "GameType":
 				value = parse_enum(GameType, value)
+				self._packets.manager._game_type = value
 			elif key == "FormatType":
 				value = parse_enum(FormatType, value)
 			else:

@@ -2,7 +2,7 @@
 Classes to provide lazy players that are treatable as an entity ID but
 do not have to receive one immediately.
 """
-from hearthstone.enums import GameTag
+from hearthstone.enums import GameTag, GameType
 
 from .exceptions import MissingPlayerData, ParsingError
 from .tokens import UNKNOWN_HUMAN_PLAYER
@@ -31,6 +31,7 @@ class PlayerManager:
 		self._registered_names = []
 		self._unregistered_names = set()
 		self.ai_player = None
+		self._game_type = None
 
 	def get_player_by_id(self, id):
 		assert id, "Expected an id for get_player_by_id (got %r)" % (id)
@@ -43,8 +44,17 @@ class PlayerManager:
 	def get_player_by_name(self, name):
 		assert name, "Expected a name for get_player_by_name (got %r)" % (name)
 		if name not in self._players_by_name:
-			if len(self._registered_names) == 1 and name != UNKNOWN_HUMAN_PLAYER:
-				# Maybe we can figure the name out right there and then
+			if (
+				len(self._registered_names) == 1 and
+				name != UNKNOWN_HUMAN_PLAYER and
+				self._game_type != GameType.GT_BATTLEGROUNDS
+			):
+				# Maybe we can figure the name out right there and then.
+
+				# NOTE: This is a neat trick, but it doesn't really work (and leads to
+				# errors) when there are lots of players such that we can't predict the
+				# player ids. Hence the check for Battlegrounds above.
+
 				other_player = self.get_player_by_name(self._registered_names[0])
 				id = 3 if other_player == 2 else 2
 				try:
