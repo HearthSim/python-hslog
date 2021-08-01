@@ -1,12 +1,17 @@
+from typing import Optional
+
 from hearthstone.enums import PowerType
+
+from hslog.player import PlayerManager
 
 
 class PacketTree:
 	def __init__(self, ts):
 		self.ts = ts
+		self.manager: Optional[PlayerManager] = None
 		self.packets = []
 		self.parent = None
-		self._packet_counter = 0
+		self.packet_counter = 0
 
 	def __iter__(self):
 		for packet in self.packets:
@@ -54,7 +59,7 @@ class Packet:
 	power_type = 0
 
 	def __repr__(self):
-		return "<%s>" % (self.__class__.__name__)
+		return "<%s>" % self.__class__.__name__
 
 
 class Block(Packet):
@@ -109,7 +114,7 @@ class MetaData(Packet):
 class CreateGame(Packet):
 	power_type = PowerType.CREATE_GAME
 
-	class Player:
+	class Player(Packet):
 		def __init__(self, ts, entity, player_id, hi, lo):
 			self.ts = ts
 			self.entity = entity
