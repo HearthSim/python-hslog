@@ -3,6 +3,7 @@ from hearthstone.enums import BlockType, GameTag, Zone
 
 from . import packets
 from .exceptions import ExporterError, MissingPlayerData
+from .player import PlayerReference
 
 
 class BaseExporter:
@@ -247,12 +248,17 @@ class EntityTreeExporter(BaseExporter):
 		return self.game
 
 	def handle_player(self, packet):
-		id = int(packet.entity)
+		if isinstance(packet.entity, PlayerReference):
+			id = packet.entity.entity_id
+		else:
+			id = packet.entity
+
 		if hasattr(self.packet_tree, "manager"):
 			# If we have a PlayerManager, first we mutate the CreateGame.Player packet.
 			# This will have to change if we're ever able to immediately get the names.
-			player = self.packet_tree.manager.get_player_by_id(id)
+			player = self.packet_tree.manager.get_player_by_entity_id(id)
 			packet.name = player.name
+
 		entity = self.player_class(id, packet.player_id, packet.hi, packet.lo, packet.name)
 		entity.tags = dict(packet.tags)
 		self.game.register_entity(entity)
@@ -271,7 +277,7 @@ class EntityTreeExporter(BaseExporter):
 			existing_entity.tags = dict(packet.tags)
 			return existing_entity
 
-		entity = self.card_class(entity_id, packet.card_id)
+		entity = self.card_class(int(entity_id), packet.card_id)
 		entity.tags = dict(packet.tags)
 		self.game.register_entity(entity)
 		return entity

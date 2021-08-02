@@ -34,9 +34,7 @@ class PlayerManager:
 		self._players_by_name: Dict[str, PlayerReference] = {}
 		self._players_by_entity_id: Dict[int, PlayerReference] = {}
 		self._players_by_player_id: Dict[int, PlayerReference] = {}
-		self._entity_controller_map = {}
-		self._registered_names = []
-		self._unregistered_names = set()
+		self._entity_controller_map: Dict[int, int] = {}
 		self.ai_player = None
 		self._game_type = None
 
@@ -69,7 +67,7 @@ class PlayerManager:
 					)
 				else:
 					return None
-			elif len(self._registered_names) > 1 and self.ai_player:
+			elif len(self._players_by_name) > 1 and self.ai_player:
 				# If we are registering our 3rd (or more) name, and we are in an AI game...
 				# then it's probably the innkeeper with a new name.
 
@@ -78,7 +76,7 @@ class PlayerManager:
 					entity_id=self.ai_player.entity_id
 				)
 			else:
-				return self.create_or_update_player(name=name)
+				return None
 
 	def create_or_update_player(
 		self,
@@ -86,7 +84,7 @@ class PlayerManager:
 		entity_id: Optional[int] = None,
 		player_id: Optional[int] = None,
 		is_ai: bool = False
-	):
+	) -> PlayerReference:
 		assert name or entity_id or player_id
 
 		if name and name != UNKNOWN_HUMAN_PLAYER and name in self._players_by_name:
@@ -108,36 +106,51 @@ class PlayerManager:
 		if name:
 			if player.name is None or player.name == UNKNOWN_HUMAN_PLAYER:
 				player.name = name
-				if name != UNKNOWN_HUMAN_PLAYER:
-					if not player.entity_id and not entity_id:
+			elif player.name != name:
+				if player == self.ai_player:
 
-						# We don't have an entity_id but we do have a name; let's see if we
-						# can guess the entity id...
+					# Need to check whether this is just the Innkeeper's name changing,
+					# which happens for all sorts of valid reasons
 
-						self._guess_player_entity_id(name)
+					player.name = name
+				else:
+					raise AssertionError()
 
-					assert name not in self._players_by_name
-					self._players_by_name[name] = player
+			if name != UNKNOWN_HUMAN_PLAYER and name not in self._players_by_name:
+				if not player.entity_id and not entity_id:
+
+					# We don't have an entity_id but we do have a name; let's see if we
+					# can guess the entity id...
+
+					self._guess_player_entity_id(name)
+
+				self._players_by_name[name] = player
 
 			elif player.name != name:
 				raise AssertionError()
 
 		if entity_id:
 			if player.entity_id is None:
-				assert entity_id not in self._players_by_entity_id
-				self._players_by_entity_id[entity_id] = player
+				player.entity_id = entity_id
 			elif player.entity_id != entity_id:
 				raise AssertionError()
 
+			if player.entity_id not in self._players_by_entity_id:
+				self._players_by_entity_id[entity_id] = player
+
 		if player_id:
 			if player.player_id is None:
-				assert player_id not in self._players_by_player_id
-				self._players_by_player_id[player_id] = player
+				player.player_id = player_id
 			elif player.player_id != player_id:
 				raise AssertionError()
 
-	def register_controller(self, entity, controller):
-		self._entity_controller_map[entity] = controller
+			if player.player_id not in self._players_by_player_id:
+				self._players_by_player_id[player_id] = player
+
+		return player
+
+	def register_controller(self, entity_id: int, player_id: int):
+		self._entity_controller_map[entity_id] = player_id
 
 	def get_controller_by_entity_id(self, entity_id: int) -> Optional[int]:
 		return self._entity_controller_map.get(entity_id)

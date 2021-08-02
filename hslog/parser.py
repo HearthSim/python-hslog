@@ -139,7 +139,10 @@ class HandlerBase:
 	def parse_method(self, m):
 		return "%s.%s" % (self._game_state_processor, m)
 
-	def find_callback(self, method: str) -> Callable[[int, Any], Any]:
+	def find_callback(self, method: str) -> Callable[[ParsingState, int, Any], Any]:
+		raise NotImplementedError()
+
+	def flush(self, ps: ParsingState):
 		raise NotImplementedError()
 
 
@@ -148,7 +151,6 @@ class PowerHandler(HandlerBase):
 		super().__init__()
 
 		self._metadata_node = None
-		self._packets: Optional[PacketTree] = None
 		self._creating_game = False
 		self.game_meta = {}
 
@@ -171,7 +173,7 @@ class PowerHandler(HandlerBase):
 		elif method == self.parse_method("DebugPrintGame"):
 			return self.handle_game
 
-	def handle_game(self, _ts, data):
+	def handle_game(self, ps: ParsingState, _ts, data):
 		if data.startswith("PlayerID="):
 			sre = tokens.GAME_PLAYER_META.match(data)
 
@@ -179,7 +181,7 @@ class PowerHandler(HandlerBase):
 				raise RegexParsingError(data)
 
 			player_id, player_name = sre.groups()
-			self._packets.manager.create_or_update_player(
+			ps.packet_tree.manager.create_or_update_player(
 				name=player_name,
 				player_id=int(player_id)
 			)
@@ -189,7 +191,7 @@ class PowerHandler(HandlerBase):
 			value = value.strip()
 			if key == "GameType":
 				value = parse_enum(GameType, value)
-				self._packets.manager._game_type = value
+				ps.packet_tree.manager._game_type = value
 			elif key == "FormatType":
 				value = parse_enum(FormatType, value)
 			else:
@@ -208,7 +210,7 @@ class PowerHandler(HandlerBase):
 			return self.handle_power(ps, ts, opcode, data)
 
 		if opcode == "GameEntity":
-			self.flush()
+			self.flush(ps)
 			self._creating_game = True
 			sre = tokens.GAME_ENTITY_RE.match(data)
 			if not sre:
@@ -217,7 +219,7 @@ class PowerHandler(HandlerBase):
 			entity_id_str, = sre.groups()
 			ps.register_game(ts, int(entity_id_str))
 		elif opcode == "Player":
-			self.flush()
+			self.flush(ps)
 			sre = tokens.PLAYER_ENTITY_RE.match(data)
 			if not sre:
 				raise RegexParsingError(data)
@@ -242,10 +244,11 @@ class PowerHandler(HandlerBase):
 				# We need to know entity controllers for player name registration
 
 				assert hasattr(ps.entity_packet, "entity")
-				self._packets.manager.register_controller(
-					ps.entity_packet.entity,  # noqa
-					value
-				)
+				entity_id = ps.entity_packet.entity.entity_id \
+					if isinstance(ps.entity_packet.entity, PlayerReference) \
+					else ps.entity_packet.entity
+
+				ps.packet_tree.manager.register_controller(int(entity_id), int(value))
 
 		elif opcode.startswith("Info["):
 			if not self._metadata_node:
@@ -280,12 +283,12 @@ class PowerHandler(HandlerBase):
 		else:
 			raise NotImplementedError(data)
 
-	def flush(self):
+	def flush(self, _ps: ParsingState):
 		if self._metadata_node:
 			self._metadata_node = None
 
 	def handle_power(self, ps: ParsingState, ts, opcode, data):
-		self.flush()
+		self.flush(ps)
 
 		if opcode == "CREATE_GAME":
 			regex, callback = tokens.CREATE_GAME_RE, self.create_game
@@ -388,6 +391,7 @@ class PowerHandler(HandlerBase):
 		pt.manager = PlayerManager()
 
 		ps.games.append(pt)
+		ps.current_block = pt
 		ps.packet_tree = pt
 
 	@staticmethod
@@ -520,6 +524,10 @@ class PowerHandler(HandlerBase):
 		tag, value = parse_tag(tag, value)
 		self._check_for_mulligan_hack(ps, ts, tag, value)
 
+		if tag == GameTag.CONTROLLER:
+			entity_id = entity.entity_id if isinstance(entity, PlayerReference) else entity
+			ps.packet_tree.manager.register_controller(int(entity_id), int(value))
+
 		if isinstance(entity, PlayerReference):
 			entity_id = self._register_player_on_tag_change(ps, entity, tag, value)
 		else:
@@ -595,6 +603,9 @@ class OptionsHandler(HandlerBase):
 			return self.handle_send_option
 		elif method == self.parse_method("DebugPrintOptions"):
 			return self.handle_options
+
+	def flush(self, _ps: ParsingState):
+		pass
 
 	def _parse_option_packet(self, ps: ParsingState, ts, data):
 		if " errorParam=" in data:
@@ -796,7 +807,7 @@ class ChoicesHandler(HandlerBase):
 			sre = tokens.CHOICES_CHOICE_RE.match(data)
 			if not sre:
 				raise RegexParsingError(data)
-			return self.register_choices(ts, *sre.groups())
+			return self.register_choices(ps, ts, *sre.groups())
 		elif data.startswith("Source="):
 			sre = tokens.CHOICES_SOURCE_RE.match(data)
 			if not sre:
@@ -955,18 +966,11 @@ class ChoicesHandler(HandlerBase):
 			sre = tokens.ENTITIES_CHOSEN_RE.match(data)
 			if not sre:
 				raise RegexParsingError(data)
-			packet_id, player, count = sre.groups()
-			packet_id = int(packet_id)
+			choice_id, player, count = sre.groups()
 			player = ps.parse_entity_or_player(player)
 
-			if isinstance(player, PlayerReference):
-				ps.packet_tree.manager.create_or_update_player(
-					name=player.name,
-					player_id=packet_id  # TODO: Incorrect
-				)
-
 			ps.chosen_packet_count = int(count)
-			ps.chosen_packet = packets.ChosenEntities(ts, player, id)
+			ps.chosen_packet = packets.ChosenEntities(ts, player, choice_id)
 			ps.register_packet(ps.chosen_packet)
 
 			return ps.chosen_packet
@@ -1023,9 +1027,25 @@ class LogParser:
 		self._options_handler = OptionsHandler()
 		self._spectator_mode_handler = SpectatorModeHandler()
 
+	def flush(self):
+		for handler in self._power_handler, self._choices_handler, self._options_handler:
+			handler.flush(self._parsing_state)
+
 	@property
 	def games(self):
 		return self._parsing_state.games
+
+	def handle_entity_choices(self, ts, data):
+		return self._choices_handler.handle_entity_choices(self._parsing_state, ts, data)
+
+	def handle_options(self, ts, data):
+		return self._options_handler.handle_options(self._parsing_state, ts, data)
+
+	def handle_power(self, ts, opcode, data):
+		return self._power_handler.handle_power(self._parsing_state, ts, opcode, data)
+
+	def parse_entity_id(self, entity):
+		return self._parsing_state.parse_entity_id(entity)
 
 	def parse_timestamp(self, ts, _method):
 		if self._last_ts is not None and self._last_ts[0] == ts:
@@ -1110,4 +1130,4 @@ class LogParser:
 			callback = handler.find_callback(method)
 			if callback:
 				ts = self.parse_timestamp(ts, method)
-				return callback(ts, msg)
+				return callback(self._parsing_state, ts, msg)
