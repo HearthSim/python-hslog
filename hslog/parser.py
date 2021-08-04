@@ -53,6 +53,7 @@ class PowerHandler:
 		self._packets = None
 		self._creating_game = False
 		self.game_meta = {}
+		self.unknown_human_player_count = 0
 
 	def _check_for_mulligan_hack(self, ts, tag, value):
 		# Old game logs didn't handle asynchronous mulligans properly.
@@ -77,6 +78,10 @@ class PowerHandler:
 				raise RegexParsingError(data)
 			player_id, player_name = sre.groups()
 			player_id = int(player_id)
+
+			if player_name == tokens.UNKNOWN_HUMAN_PLAYER:
+				self.unknown_human_player_count += 1
+
 			self._packets.manager.register_player_name_by_player_id(player_name, player_id)
 		else:
 			key, value = data.split("=")
