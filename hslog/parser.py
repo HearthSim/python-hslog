@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Callable, Any, Union
+from typing import Optional, Callable, Any, Union, List, Dict
 
 from aniso8601 import parse_time
 from hearthstone.enums import (
@@ -11,7 +11,7 @@ from hearthstone.enums import (
 from . import packets, tokens
 from .exceptions import ParsingError, RegexParsingError
 from .packets import PacketTree, Packet, CreateGame, ChosenEntities, Block, SubSpell, \
-	Choices
+	Choices, MetaData, SendChoices
 from .player import PlayerManager, PlayerReference
 from .utils import parse_enum, parse_tag
 
@@ -20,15 +20,20 @@ class ParsingState:
 
 	def __init__(self):
 		self.current_block: Optional[Union[Packet, PacketTree]] = None
+		self.game_meta = {}
 		self.games = []
+		self.mulligan_choices: Dict[int, Choices] = {}
 		self.packet_tree: Optional[PacketTree] = None
 		self.spectating_first_player = False
 		self.spectating_second_player = False
 
+		self.choice_packet: Optional[Choices] = None
 		self.chosen_packet: Optional[ChosenEntities] = None
 		self.chosen_packet_count: int = 0
 		self.entity_packet: Optional[Packet] = None
 		self.game_packet: Optional[CreateGame] = None
+		self.metadata_node: Optional[MetaData] = None
+		self.send_choice_packet: Optional[SendChoices] = None
 
 	def block_end(self, ts):
 		if not self.current_block.parent:
@@ -41,6 +46,54 @@ class ParsingState:
 		block = self.current_block
 		self.current_block = self.current_block.parent
 		return block
+
+	def _register_player_name_mulligan(self, player: PlayerReference, packet: Choices):
+		"""
+		Attempt to register player names by looking at Mulligan choice packets.
+		In Hearthstone 6.0+, registering a player name using tag changes is not
+		available as early as before. That means games conceded at Mulligan no
+		longer have player names.
+		This technique uses the cards offered in Mulligan instead, registering
+		the name of the packet's entity with the card's controller as PlayerID.
+		"""
+		if player.entity_id:
+			# The player is already registered, ignore.
+			return player
+		if not player.name:
+			# If we don't have the player name, we can't use this at all
+			return player
+		for choice in packet.choices:
+			player_id = self.packet_tree.manager.get_controller_by_entity_id(choice)
+			if player_id is None:
+				raise ParsingError("Unknown entity ID in choice: %r" % choice)
+
+			player = self.packet_tree.manager.create_or_update_player(
+				name=player.name,
+				player_id=player_id
+			)
+
+			packet.entity = player.entity_id
+
+		return player
+
+	def flush(self):
+		if self.metadata_node:
+			self.metadata_node = None
+
+		if self.choice_packet:
+			if self.choice_packet.type == ChoiceType.MULLIGAN:
+				if isinstance(self.choice_packet.entity, PlayerReference):
+					player = self._register_player_name_mulligan(
+						self.choice_packet.entity,
+						self.choice_packet
+					)
+					self.mulligan_choices[player.player_id] = self.choice_packet
+			self.choice_packet = None
+
+		self.chosen_packet = None
+
+		if self.send_choice_packet:
+			self.send_choice_packet = None
 
 	def parse_entity_id(self, entity: str) -> int:
 		if entity.isdigit():
@@ -142,17 +195,12 @@ class HandlerBase:
 	def find_callback(self, method: str) -> Callable[[ParsingState, int, Any], Any]:
 		raise NotImplementedError()
 
-	def flush(self, ps: ParsingState):
-		raise NotImplementedError()
-
 
 class PowerHandler(HandlerBase):
 	def __init__(self):
 		super().__init__()
 
-		self._metadata_node = None
 		self._creating_game = False
-		self.game_meta = {}
 
 	@staticmethod
 	def _check_for_mulligan_hack(ps: ParsingState, ts, tag, value):
@@ -197,7 +245,7 @@ class PowerHandler(HandlerBase):
 			else:
 				value = int(value)
 
-			self.game_meta[key] = value
+			ps.game_meta[key] = value
 
 	def handle_data(self, ps: ParsingState, ts, data):
 		opcode = data.split()[0]
@@ -210,7 +258,7 @@ class PowerHandler(HandlerBase):
 			return self.handle_power(ps, ts, opcode, data)
 
 		if opcode == "GameEntity":
-			self.flush(ps)
+			ps.flush()
 			self._creating_game = True
 			sre = tokens.GAME_ENTITY_RE.match(data)
 			if not sre:
@@ -219,7 +267,7 @@ class PowerHandler(HandlerBase):
 			entity_id_str, = sre.groups()
 			ps.register_game(ts, int(entity_id_str))
 		elif opcode == "Player":
-			self.flush(ps)
+			ps.flush()
 			sre = tokens.PLAYER_ENTITY_RE.match(data)
 			if not sre:
 				raise RegexParsingError(data)
@@ -251,7 +299,7 @@ class PowerHandler(HandlerBase):
 				ps.packet_tree.manager.register_controller(int(entity_id), int(value))
 
 		elif opcode.startswith("Info["):
-			if not self._metadata_node:
+			if not ps.metadata_node:
 				logging.warning("[%s] Metadata Info outside of META_DATA: %r", ts, data)
 				return
 			sre = tokens.METADATA_INFO_RE.match(data)
@@ -259,7 +307,7 @@ class PowerHandler(HandlerBase):
 				raise RegexParsingError(data)
 			idx, entity = sre.groups()
 			entity = ps.parse_entity_or_player(entity)
-			self._metadata_node.info.append(entity)
+			ps.metadata_node.info.append(entity)
 		elif opcode == "Source":
 			sre = tokens.SUB_SPELL_START_SOURCE_RE.match(data)
 			if not sre:
@@ -283,12 +331,8 @@ class PowerHandler(HandlerBase):
 		else:
 			raise NotImplementedError(data)
 
-	def flush(self, _ps: ParsingState):
-		if self._metadata_node:
-			self._metadata_node = None
-
 	def handle_power(self, ps: ParsingState, ts, opcode, data):
-		self.flush(ps)
+		ps.flush()
 
 		if opcode == "CREATE_GAME":
 			regex, callback = tokens.CREATE_GAME_RE, self.create_game
@@ -478,9 +522,9 @@ class PowerHandler(HandlerBase):
 			data = ps.parse_entity_id(data)
 
 		count = int(info_count)
-		self._metadata_node = packets.MetaData(ts, meta, data, count)
-		ps.register_packet(self._metadata_node)
-		return self._metadata_node
+		ps.metadata_node = MetaData(ts, meta, data, count)
+		ps.register_packet(ps.metadata_node)
+		return ps.metadata_node
 
 	@staticmethod
 	def _register_player_on_tag_change(
@@ -527,6 +571,10 @@ class PowerHandler(HandlerBase):
 		if tag == GameTag.CONTROLLER:
 			entity_id = entity.entity_id if isinstance(entity, PlayerReference) else entity
 			ps.packet_tree.manager.register_controller(int(entity_id), int(value))
+
+		elif tag == GameTag.FIRST_PLAYER:
+			entity_id = entity.entity_id if isinstance(entity, PlayerReference) else entity
+			ps.packet_tree.manager.notify_first_player(int(entity_id))
 
 		if isinstance(entity, PlayerReference):
 			entity_id = self._register_player_on_tag_change(ps, entity, tag, value)
@@ -603,9 +651,6 @@ class OptionsHandler(HandlerBase):
 			return self.handle_send_option
 		elif method == self.parse_method("DebugPrintOptions"):
 			return self.handle_options
-
-	def flush(self, _ps: ParsingState):
-		pass
 
 	def _parse_option_packet(self, ps: ParsingState, ts, data):
 		if " errorParam=" in data:
@@ -725,9 +770,6 @@ class ChoicesHandler(HandlerBase):
 	def __init__(self):
 		super().__init__()
 
-		self._choice_packet = None
-		self._send_choice_packet = None
-
 	def find_callback(self, method):
 		if method == self.parse_method("DebugPrintEntityChoices"):
 			return self.handle_entity_choices
@@ -737,57 +779,6 @@ class ChoicesHandler(HandlerBase):
 			return self.handle_send_choices
 		elif method == self.parse_method("DebugPrintEntitiesChosen"):
 			return self.handle_entities_chosen
-
-	@staticmethod
-	def _register_player_name_mulligan(
-		ps: ParsingState,
-		player: PlayerReference,
-		packet: Choices,
-	):
-		"""
-		Attempt to register player names by looking at Mulligan choice packets.
-		In Hearthstone 6.0+, registering a player name using tag changes is not
-		available as early as before. That means games conceded at Mulligan no
-		longer have player names.
-		This technique uses the cards offered in Mulligan instead, registering
-		the name of the packet's entity with the card's controller as PlayerID.
-		"""
-		if player.entity_id:
-			# The player is already registered, ignore.
-			return
-		if not player.name:
-			# If we don't have the player name, we can't use this at all
-			return
-
-		for choice in packet.choices:
-			player_id = ps.packet_tree.manager.get_controller_by_entity_id(choice)
-			if player_id is None:
-				raise ParsingError("Unknown entity ID in choice: %r" % choice)
-
-			player = ps.packet_tree.manager.create_or_update_player(
-				name=player.name,
-				player_id=player_id
-			)
-
-			packet.entity = player.entity_id
-
-			return player
-
-	def flush(self, ps: ParsingState):
-		if self._choice_packet:
-			if self._choice_packet.type == ChoiceType.MULLIGAN:
-				if isinstance(self._choice_packet.entity, PlayerReference):
-					self._register_player_name_mulligan(
-						ps,
-						self._choice_packet.entity,
-						self._choice_packet
-					)
-			self._choice_packet = None
-
-		ps.chosen_packet = None
-
-		if self._send_choice_packet:
-			self._send_choice_packet = None
 
 	def handle_entity_choices_old(self, ps: ParsingState, ts, data):
 		if data.startswith("id="):
@@ -814,9 +805,9 @@ class ChoicesHandler(HandlerBase):
 				raise RegexParsingError(data)
 			entity, = sre.groups()
 			entity_id = ps.parse_entity_or_player(entity)
-			if not self._choice_packet:
+			if not ps.choice_packet:
 				raise ParsingError("Source Choice Entity outside of choie packet: %r" % data)
-			self._choice_packet.source = entity_id
+			ps.choice_packet.source = entity_id
 			return entity_id
 		elif data.startswith("Entities["):
 			sre = tokens.CHOICES_ENTITIES_RE.match(data)
@@ -826,9 +817,9 @@ class ChoicesHandler(HandlerBase):
 			entity_id = ps.parse_entity_or_player(entity)
 			if not entity_id:
 				raise ParsingError("Missing choice entity %r (%r)" % (entity_id, entity))
-			if not self._choice_packet:
+			if not ps.choice_packet:
 				raise ParsingError("Choice Entity outside of choice packet: %r" % data)
-			self._choice_packet.choices.append(entity_id)
+			ps.choice_packet.choices.append(entity_id)
 			return entity_id
 		raise NotImplementedError("Unhandled entity choice: %r" % data)
 
@@ -836,29 +827,28 @@ class ChoicesHandler(HandlerBase):
 		self,
 		ps: ParsingState,
 		ts,
-		entity_id,
+		choice_id,
 		player,
 		tasklist,
 		choice_type,
 		min_choice,
 		max_choice
 	):
-		entity_id = int(entity_id)
 		choice_type = parse_enum(ChoiceType, choice_type)
 		min_choice, max_choice = int(min_choice), int(max_choice)
-		self._choice_packet = packets.Choices(
+		ps.choice_packet = packets.Choices(
 			ts,
 			player,
-			entity_id,
+			choice_id,
 			tasklist,
 			choice_type,
 			min_choice,
 			max_choice
 		)
-		ps.register_packet(self._choice_packet)
-		return self._choice_packet
+		ps.register_packet(ps.choice_packet)
+		return ps.choice_packet
 
-	def register_choices_old_1(self, ps: ParsingState, ts, entity_id, choice_type):
+	def register_choices_old_1(self, ps: ParsingState, ts, choice_id, choice_type):
 		player = None
 
 		# XXX: We don't have a player here for old games.
@@ -870,7 +860,7 @@ class ChoicesHandler(HandlerBase):
 		return self._register_choices(
 			ps,
 			ts,
-			entity_id,
+			int(choice_id),
 			player,
 			tasklist,
 			choice_type,
@@ -882,7 +872,7 @@ class ChoicesHandler(HandlerBase):
 		self,
 		ps: ParsingState,
 		ts,
-		entity_id,
+		choice_id,
 		player_id,
 		choice_type,
 		min_choice,
@@ -891,7 +881,7 @@ class ChoicesHandler(HandlerBase):
 		return self._register_choices(
 			ps,
 			ts,
-			entity_id,
+			int(choice_id),
 			ps.packet_tree.manager.get_player_by_player_id(int(player_id)),
 			None,
 			choice_type,
@@ -903,7 +893,7 @@ class ChoicesHandler(HandlerBase):
 		self,
 		ps: ParsingState,
 		ts,
-		entity_id,
+		choice_id,
 		player,
 		tasklist,
 		choice_type,
@@ -920,7 +910,7 @@ class ChoicesHandler(HandlerBase):
 		return self._register_choices(
 			ps,
 			ts,
-			entity_id,
+			int(choice_id),
 			player,
 			tasklist,
 			choice_type,
@@ -936,13 +926,13 @@ class ChoicesHandler(HandlerBase):
 				raise RegexParsingError(data)
 
 			choice_id, choice_type = sre.groups()
-			self._send_choice_packet = packets.SendChoices(
+			ps.send_choice_packet = packets.SendChoices(
 				ts,
 				int(choice_id),
 				parse_enum(ChoiceType, choice_type)
 			)
-			ps.register_packet(self._send_choice_packet)
-			return self._send_choice_packet
+			ps.register_packet(ps.send_choice_packet)
+			return ps.send_choice_packet
 		elif data.startswith("m_chosenEntities"):
 			sre = tokens.SEND_CHOICES_ENTITIES_RE.match(data)
 
@@ -954,10 +944,10 @@ class ChoicesHandler(HandlerBase):
 
 			if not ep:
 				raise ParsingError("Missing chosen entity %r (%r)" % (ep, entity))
-			if not self._send_choice_packet:
+			if not ps.send_choice_packet:
 				raise ParsingError("Chosen Entity outside of choice packet: %r" % data)
 
-			self._send_choice_packet.choices.append(ep)
+			ps.send_choice_packet.choices.append(ep)
 			return ep
 		raise NotImplementedError("Unhandled send choice: %r" % data)
 
@@ -970,8 +960,16 @@ class ChoicesHandler(HandlerBase):
 			player = ps.parse_entity_or_player(player)
 
 			ps.chosen_packet_count = int(count)
-			ps.chosen_packet = packets.ChosenEntities(ts, player, choice_id)
+			ps.chosen_packet = packets.ChosenEntities(ts, player, int(choice_id))
 			ps.register_packet(ps.chosen_packet)
+
+			for player_id, mulligan_choice in ps.mulligan_choices.items():
+				if mulligan_choice.id == ps.chosen_packet.id:
+					ps.packet_tree.manager.create_or_update_player(
+						name=player.name,
+						player_id=player_id
+					)
+					break
 
 			return ps.chosen_packet
 		elif data.startswith("Entities["):
@@ -1028,8 +1026,11 @@ class LogParser:
 		self._spectator_mode_handler = SpectatorModeHandler()
 
 	def flush(self):
-		for handler in self._power_handler, self._choices_handler, self._options_handler:
-			handler.flush(self._parsing_state)
+		self._parsing_state.flush()
+
+	@property
+	def game_meta(self):
+		return self._parsing_state.game_meta
 
 	@property
 	def games(self):

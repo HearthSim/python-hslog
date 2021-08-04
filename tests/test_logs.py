@@ -4,6 +4,7 @@ from hearthstone.enums import FormatType, GameType
 from hslog import packets
 from hslog.export import EntityTreeExporter, ExporterError, FriendlyPlayerExporter
 from hslog.packets import TagChange
+from hslog.player import InconsistentPlayerIdError
 
 from .conftest import logfile
 
@@ -75,13 +76,9 @@ def test_debugprintgame(parser):
 
 @pytest.mark.regression_suite
 def test_bad_ids(parser):
-	with open(logfile("chaos/change_entity_null_id.power.log")) as f:
-		parser.read(f)
-
-	packet_tree = parser.games[0]
-	exporter = EntityTreeExporter(packet_tree)
-	with pytest.raises(ExporterError):
-		exporter.export()
+	with pytest.raises(InconsistentPlayerIdError):
+		with open(logfile("chaos/change_entity_null_id.power.log")) as f:
+			parser.read(f)
 
 
 @pytest.mark.regression_suite

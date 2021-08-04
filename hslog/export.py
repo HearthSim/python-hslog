@@ -226,9 +226,9 @@ class EntityTreeExporter(BaseExporter):
 	class EntityNotFound(Exception):
 		pass
 
-	def find_entity(self, id, opcode):
+	def find_entity(self, entity_id: int, opcode):
 		try:
-			entity = self.game.find_entity_by_id(id)
+			entity = self.game.find_entity_by_id(entity_id)
 		except MissingPlayerData:
 			raise self.EntityNotFound("Error getting entity %r for %s" % (id, opcode))
 		if not entity:
@@ -305,8 +305,11 @@ class EntityTreeExporter(BaseExporter):
 		return entity
 
 	def handle_tag_change(self, packet):
-		entity = self.find_entity(packet.entity, "TAG_CHANGE")
+		entity_id = packet.entity.entity_id if isinstance(packet.entity, PlayerReference) \
+			else int(packet.entity)
+		entity = self.find_entity(entity_id, "TAG_CHANGE")
 		entity.tag_change(packet.tag, packet.value)
+
 		return entity
 
 

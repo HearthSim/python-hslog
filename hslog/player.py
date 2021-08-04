@@ -20,6 +20,19 @@ class PlayerReference:
 		self.name = name
 		self.player_id = player_id
 
+	def __eq__(self, other):
+		if not isinstance(other, PlayerReference):
+			return False
+
+		return (
+			self.entity_id == other.entity_id and
+			self.name == other.name and
+			self.player_id == other.player_id
+		)
+
+	def __hash__(self):
+		return hash((self.entity_id, self.name, self.player_id))
+
 	def __repr__(self):
 		return "%s(name=%r, entity_id=%r, player_id=%r)" % (
 			self.__class__.__name__,
@@ -29,13 +42,28 @@ class PlayerReference:
 		)
 
 
+class InconsistentEntityIdError(Exception):
+
+	def __init__(self, player: PlayerReference, entity_id: int):
+		self.player = player
+		self.entity_id = entity_id
+
+
+class InconsistentPlayerIdError(Exception):
+
+	def __init__(self, player: PlayerReference, player_id: int):
+		self.player = player
+		self.player_id = player_id
+
+
 class PlayerManager:
 	def __init__(self):
 		self._players_by_name: Dict[str, PlayerReference] = {}
 		self._players_by_entity_id: Dict[int, PlayerReference] = {}
 		self._players_by_player_id: Dict[int, PlayerReference] = {}
 		self._entity_controller_map: Dict[int, int] = {}
-		self.ai_player = None
+		self.ai_player: Optional[PlayerReference] = None
+		self.first_player: Optional[PlayerReference] = None
 		self._game_type = None
 
 	def get_player_by_entity_id(self, entity_id: int) -> Optional[PlayerReference]:
@@ -60,13 +88,16 @@ class PlayerManager:
 
 				other_player = next(iter(self._players_by_name.values()))
 				entity_id = 3 if other_player.entity_id == 2 else 2
-				if entity_id not in self._players_by_entity_id:
+				if entity_id in self._players_by_entity_id:
+					player = self._players_by_entity_id[entity_id]
+					player.name = name
+					self._players_by_name[name] = player
+					return player
+				else:
 					return self.create_or_update_player(
 						name=name,
 						entity_id=entity_id
 					)
-				else:
-					return None
 			elif len(self._players_by_name) > 1 and self.ai_player:
 				# If we are registering our 3rd (or more) name, and we are in an AI game...
 				# then it's probably the innkeeper with a new name.
@@ -123,6 +154,8 @@ class PlayerManager:
 					# can guess the entity id...
 
 					self._guess_player_entity_id(name)
+					if name in self._players_by_name:
+						player = self._players_by_name[name]
 
 				self._players_by_name[name] = player
 
@@ -133,21 +166,65 @@ class PlayerManager:
 			if player.entity_id is None:
 				player.entity_id = entity_id
 			elif player.entity_id != entity_id:
-				raise AssertionError()
+				raise InconsistentEntityIdError(player, entity_id)
 
-			if player.entity_id not in self._players_by_entity_id:
+			if player.entity_id in self._players_by_entity_id:
+				self._safe_merge_player_references(
+					self._players_by_entity_id[player.entity_id],
+					player,
+				)
+			else:
 				self._players_by_entity_id[entity_id] = player
 
 		if player_id:
 			if player.player_id is None:
 				player.player_id = player_id
 			elif player.player_id != player_id:
-				raise AssertionError()
+				raise InconsistentPlayerIdError(player, player_id)
 
-			if player.player_id not in self._players_by_player_id:
+			if player.player_id in self._players_by_player_id:
+				self._safe_merge_player_references(
+					self._players_by_player_id[player.player_id],
+					player,
+				)
+			else:
 				self._players_by_player_id[player_id] = player
 
 		return player
+
+	@staticmethod
+	def _safe_merge_player_references(left: PlayerReference, right: PlayerReference):
+		if left.entity_id is None:
+			if right.entity_id is not None:
+				left.entity_id = right.entity_id
+		elif right.entity_id is None:
+			right.entity_id = left.entity_id
+		else:
+			assert left.entity_id == right.entity_id
+
+		if left.player_id is None:
+			if right.player_id is not None:
+				left.player_id = right.player_id
+		elif right.player_id is None:
+			right.player_id = left.player_id
+		else:
+			assert left.player_id == right.player_id
+
+		if left.name is None or left.name == UNKNOWN_HUMAN_PLAYER:
+			if right.name is not None:
+				left.name = right.name
+		elif right.player_id is None or right.name == UNKNOWN_HUMAN_PLAYER:
+			if left.name is not None:
+				right.name = left.name
+
+	def notify_first_player(self, entity_id: int):
+		if entity_id in self._players_by_entity_id:
+			first_player = self._players_by_entity_id[entity_id]
+		else:
+			first_player = PlayerReference(entity_id=entity_id)
+			self._players_by_entity_id[entity_id] = first_player
+
+		self.first_player = first_player
 
 	def register_controller(self, entity_id: int, player_id: int):
 		self._entity_controller_map[entity_id] = player_id
