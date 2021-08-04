@@ -222,7 +222,7 @@ class EntityTreeExporter(BaseExporter):
 	player_class = Player
 	card_class = Card
 
-	class EntityNotFound(ExporterError):
+	class EntityNotFound(Exception):
 		pass
 
 	def find_entity(self, id, opcode):

@@ -84,7 +84,6 @@ class PowerHandler:
 			value = value.strip()
 			if key == "GameType":
 				value = parse_enum(GameType, value)
-				self._packets.manager._game_type = value
 			elif key == "FormatType":
 				value = parse_enum(FormatType, value)
 			else:
@@ -627,6 +626,12 @@ class ChoicesHandler:
 			id, player, count = sre.groups()
 			id = int(id)
 			player = self.parse_entity_or_player(player)
+			if isinstance(player, LazyPlayer):
+				player.id = id
+				self._packets.manager.register_player_name_by_player_id(
+					player.name,
+					player.id
+				)
 			self._chosen_packet_count = int(count)
 			self._chosen_packet = packets.ChosenEntities(ts, player, id)
 			self.register_packet(self._chosen_packet)
@@ -644,17 +649,6 @@ class ChoicesHandler:
 			self._chosen_packet.choices.append(id)
 			if len(self._chosen_packet.choices) > self._chosen_packet_count:
 				raise ParsingError("Too many choices (expected %r)" % (self._chosen_packet_count))
-
-			if isinstance(self._chosen_packet.entity, LazyPlayer):
-				player = self._chosen_packet.entity
-				sre = tokens.ENTITIES_CHOSEN_PLAYER_RE.search(entity)
-				if sre:
-					player_id, = sre.groups()
-					self._packets.manager.register_player_name_by_player_id(
-						player.name,
-						int(player_id)
-					)
-
 			return id
 		raise NotImplementedError("Unhandled entities chosen: %r" % (data))
 
