@@ -192,3 +192,14 @@ def test_async_player_names(parser):
 
 	with pytest.raises(MissingPlayerData):
 		exporter.export()
+
+
+@pytest.mark.regression_suite
+def test_shuffle_deck(parser):
+	with open(logfile("88998_missing_player_hash.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+	exporter.export()
+	assert True

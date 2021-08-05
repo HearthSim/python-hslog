@@ -71,14 +71,24 @@ class InconsistentPlayerIdError(Exception):
 
 class PlayerManager:
 	def __init__(self):
+		self._entity_controller_map: Dict[int, int] = {}
+		self._game_type = None
+		self._name_aliases: Dict[str, str] = {}
 		self._players_by_name: Dict[str, PlayerReference] = {}
 		self._players_by_entity_id: Dict[int, PlayerReference] = {}
 		self._players_by_player_id: Dict[int, PlayerReference] = {}
-		self._entity_controller_map: Dict[int, int] = {}
+		self._player_resolution_order: List[int] = []
+
 		self.ai_player: Optional[PlayerReference] = None
 		self.first_player: Optional[PlayerReference] = None
-		self._game_type = None
-		self._player_resolution_order: List[int] = []
+
+	def _maybe_alias_name(self, name):
+		if "#" in name:
+			alias = name[:name.index("#")]
+			if alias in self._name_aliases:
+				assert self._name_aliases[alias] == name
+			else:
+				self._name_aliases[alias] = name
 
 	def get_player_by_entity_id(self, entity_id: int) -> Optional[PlayerReference]:
 		return self._players_by_entity_id.get(entity_id)
@@ -105,7 +115,10 @@ class PlayerManager:
 				if entity_id in self._players_by_entity_id:
 					player = self._players_by_entity_id[entity_id]
 					player.name = name
+
 					self._players_by_name[name] = player
+					self._maybe_alias_name(name)
+
 					return player
 				else:
 					return self.create_or_update_player(
@@ -132,18 +145,27 @@ class PlayerManager:
 	) -> PlayerReference:
 		assert name or entity_id or player_id
 
-		if name and name != UNKNOWN_HUMAN_PLAYER and name in self._players_by_name:
-			player = self._players_by_name[name]
-		elif entity_id and entity_id in self._players_by_entity_id:
-			player = self._players_by_entity_id[entity_id]
-		elif player_id and player_id in self._players_by_player_id:
-			player = self._players_by_player_id[player_id]
-		else:
-			player = PlayerReference(
-				name=name,
-				entity_id=entity_id,
-				player_id=player_id,
-			)
+		player: Optional[PlayerReference] = None
+
+		if name and name != UNKNOWN_HUMAN_PLAYER:
+			if name in self._players_by_name:
+				player = self._players_by_name[name]
+			elif name in self._name_aliases:
+				player = self._players_by_name[self._name_aliases[name]]
+			else:
+				player = None
+
+		if player is None:
+			if entity_id and entity_id in self._players_by_entity_id:
+				player = self._players_by_entity_id[entity_id]
+			elif player_id and player_id in self._players_by_player_id:
+				player = self._players_by_player_id[player_id]
+			else:
+				player = PlayerReference(
+					name=name,
+					entity_id=entity_id,
+					player_id=player_id,
+				)
 
 		if is_ai:
 			self.ai_player = player
@@ -151,7 +173,7 @@ class PlayerManager:
 		if name:
 			if player.name is None or player.name == UNKNOWN_HUMAN_PLAYER:
 				player.name = name
-			elif player.name != name:
+			elif player.name != name and player.name != self._name_aliases.get(name):
 				if player == self.ai_player:
 
 					# Need to check whether this is just the Innkeeper's name changing,
@@ -161,7 +183,11 @@ class PlayerManager:
 				else:
 					raise AssertionError()
 
-			if name != UNKNOWN_HUMAN_PLAYER and name not in self._players_by_name:
+			if (
+				name != UNKNOWN_HUMAN_PLAYER and
+				name not in self._players_by_name and
+				name not in self._name_aliases
+			):
 				if not player.entity_id and not entity_id:
 
 					# We don't have an entity_id but we do have a name; let's see if we
@@ -172,8 +198,8 @@ class PlayerManager:
 						player = self._players_by_name[name]
 
 				self._players_by_name[name] = player
-
-			elif player.name != name:
+				self._maybe_alias_name(name)
+			elif player.name != name and player.name != self._name_aliases.get(name):
 				raise AssertionError()
 
 		if entity_id:
@@ -203,29 +229,6 @@ class PlayerManager:
 				)
 			else:
 				self._players_by_player_id[player_id] = player
-
-		if (
-			player.name is not None and
-			player.name != UNKNOWN_HUMAN_PLAYER and
-			player.entity_id and
-			player.player_id and
-			player.player_id not in self._player_resolution_order
-		):
-			self._player_resolution_order.append(player.player_id)
-		elif (
-			player.name == UNKNOWN_HUMAN_PLAYER and
-			player.entity_id is None and
-			player.player_id is None and
-			self._game_type != GameType.GT_BATTLEGROUNDS and
-			len(self._player_resolution_order) < len(self._players_by_player_id)
-		):
-			unresolved_keys = [
-				k for k in self._players_by_player_id.keys()
-				if k not in self._player_resolution_order
-			]
-
-			if len(unresolved_keys) == 1:
-				player = self._players_by_player_id[unresolved_keys[0]]
 
 		return player
 

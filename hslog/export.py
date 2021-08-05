@@ -3,7 +3,7 @@ from hearthstone.enums import BlockType, GameTag, Zone
 
 from . import packets
 from .exceptions import ExporterError, MissingPlayerData
-from .player import PlayerReference
+from .player import PlayerReference, coerce_to_entity_id
 
 
 class BaseExporter:
