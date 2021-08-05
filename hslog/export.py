@@ -1,9 +1,11 @@
+from typing import Optional
+
 from hearthstone.entities import Card, Game, Player
 from hearthstone.enums import BlockType, GameTag, Zone
 
 from . import packets
 from .exceptions import ExporterError, MissingPlayerData
-from .player import coerce_to_entity_id
+from .player import PlayerManager, coerce_to_entity_id
 
 
 class BaseExporter:
@@ -45,7 +47,7 @@ class BaseExporter:
 		packet_type = packet.__class__
 		handler = self.dispatch.get(packet_type, None)
 		if not handler:
-			raise NotImplementedError("Don't know how to export %r" % (packet_type))
+			raise NotImplementedError("Don't know how to export %r" % packet_type)
 		handler(packet)
 
 	def flush(self):
@@ -226,6 +228,13 @@ class EntityTreeExporter(BaseExporter):
 	class EntityNotFound(Exception):
 		pass
 
+	def __init__(self, packet_tree, player_manager: Optional[PlayerManager] = None):
+		super().__init__(packet_tree)
+
+		self.game: Optional[Game] = None
+
+		self.player_manager = player_manager
+
 	def find_entity(self, entity_id: int, opcode):
 		try:
 			entity = self.game.find_entity_by_id(entity_id)
@@ -250,10 +259,11 @@ class EntityTreeExporter(BaseExporter):
 	def handle_player(self, packet):
 		entity_id = coerce_to_entity_id(packet.entity)
 
-		if hasattr(self.packet_tree, "manager"):
-			# If we have a PlayerManager, first we mutate the CreateGame.Player packet.
-			# This will have to change if we're ever able to immediately get the names.
-			player = self.packet_tree.manager.get_player_by_entity_id(int(entity_id))
+		# If we have a PlayerManager, first we mutate the CreateGame.Player packet.
+		# This will have to change if we're ever able to immediately get the names.
+
+		if self.player_manager:
+			player = self.player_manager.get_player_by_entity_id(int(entity_id))
 			packet.name = player.name
 
 		entity = self.player_class(

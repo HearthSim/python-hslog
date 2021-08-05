@@ -1,14 +1,9 @@
-from typing import Optional
-
 from hearthstone.enums import PowerType
-
-from hslog.player import PlayerManager
 
 
 class PacketTree:
 	def __init__(self, ts):
 		self.ts = ts
-		self.manager: Optional[PlayerManager] = None
 		self.packets = []
 		self.parent = None
 		self.packet_counter = 0

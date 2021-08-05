@@ -24,6 +24,7 @@ class ParsingState:
 		self.current_block: Optional[Union[Packet, PacketTree]] = None
 		self.game_meta = {}
 		self.games = []
+		self.manager = PlayerManager()
 		self.mulligan_choices: Dict[int, Choices] = {}
 		self.packet_tree: Optional[PacketTree] = None
 		self.spectating_first_player = False
@@ -65,11 +66,11 @@ class ParsingState:
 			# If we don't have the player name, we can't use this at all
 			return player
 		for choice in packet.choices:
-			player_id = self.packet_tree.manager.get_controller_by_entity_id(choice)
+			player_id = self.manager.get_controller_by_entity_id(choice)
 			if player_id is None:
 				raise ParsingError("Unknown entity ID in choice: %r" % choice)
 
-			player = self.packet_tree.manager.create_or_update_player(
+			player = self.manager.create_or_update_player(
 				name=player.name,
 				player_id=player_id
 			)
@@ -116,7 +117,7 @@ class ParsingState:
 		entity_id = self.parse_entity_id(entity)
 		if entity_id is None:
 			# Only case where an id is None is if it's a Player name
-			return self.packet_tree.manager.create_or_update_player(name=entity)
+			return self.manager.create_or_update_player(name=entity)
 		return entity_id
 
 	def register_game(self, _ts: int, entity_id: int):
@@ -136,7 +137,7 @@ class ParsingState:
 	def register_player(self, ts, entity_id: int, player_id: int, hi: int, lo: int):
 		hi = int(hi)
 		lo = int(lo)
-		lazy_player = self.packet_tree.manager.create_or_update_player(
+		lazy_player = self.manager.create_or_update_player(
 			entity_id=entity_id,
 			player_id=player_id,
 			is_ai=lo == 0
@@ -223,7 +224,8 @@ class PowerHandler(HandlerBase):
 		elif method == self.parse_method("DebugPrintGame"):
 			return self.handle_game
 
-	def handle_game(self, ps: ParsingState, _ts, data):
+	@staticmethod
+	def handle_game(ps: ParsingState, _ts, data):
 		if data.startswith("PlayerID="):
 			sre = tokens.GAME_PLAYER_META.match(data)
 
@@ -231,17 +233,14 @@ class PowerHandler(HandlerBase):
 				raise RegexParsingError(data)
 
 			player_id, player_name = sre.groups()
-			ps.packet_tree.manager.create_or_update_player(
-				name=player_name,
-				player_id=int(player_id)
-			)
+			ps.manager.create_or_update_player(name=player_name, player_id=int(player_id))
 		else:
 			key, value = data.split("=")
 			key = key.strip()
 			value = value.strip()
 			if key == "GameType":
 				value = parse_enum(GameType, value)
-				ps.packet_tree.manager._game_type = value
+				ps.manager._game_type = value
 			elif key == "FormatType":
 				value = parse_enum(FormatType, value)
 			else:
@@ -295,7 +294,7 @@ class PowerHandler(HandlerBase):
 
 				assert hasattr(ps.entity_packet, "entity")
 				entity_id = coerce_to_entity_id(ps.entity_packet.entity)  # noqa
-				ps.packet_tree.manager.register_controller(int(entity_id), int(value))
+				ps.manager.register_controller(int(entity_id), int(value))
 
 		elif opcode.startswith("Info["):
 			if not ps.metadata_node:
@@ -431,7 +430,6 @@ class PowerHandler(HandlerBase):
 	def create_game(ps: ParsingState, ts):
 		pt = packets.PacketTree(ts)
 		pt.spectator_mode = ps.spectator_mode
-		pt.manager = PlayerManager()
 
 		ps.games.append(pt)
 		ps.current_block = pt
@@ -514,7 +512,8 @@ class PowerHandler(HandlerBase):
 		ps.register_packet(ps.entity_packet)
 		return ps.entity_packet
 
-	def meta_data(self, ps: ParsingState, ts, meta, data, info_count):
+	@staticmethod
+	def meta_data(ps: ParsingState, ts, meta, data, info_count):
 		meta = parse_enum(MetaDataType, meta)
 
 		if meta == MetaDataType.JOUST:
@@ -541,7 +540,7 @@ class PowerHandler(HandlerBase):
 			# its ENTITY_ID is not available immediately (in pre-6.0).
 			# If we get a matching ENTITY_ID, then we can use that to match it.
 
-			return ps.packet_tree.manager.create_or_update_player(
+			return ps.manager.create_or_update_player(
 				name=player.name,
 				entity_id=int(value)
 			)
@@ -550,15 +549,12 @@ class PowerHandler(HandlerBase):
 			# This is a fallback to register_player_name_mulligan in case the mulligan
 			# phase is not available in this game (spectator mode, reconnects).
 
-			player_id = ps.packet_tree.manager.get_controller_by_entity_id(int(value))
+			player_id = ps.manager.get_controller_by_entity_id(int(value))
 
 			if player_id is None:
 				raise ParsingError("Unknown entity ID on TAG_CHANGE: %r" % value)
 
-			return ps.packet_tree.manager.create_or_update_player(
-				name=player.name,
-				player_id=player_id,
-			)
+			return ps.manager.create_or_update_player(name=player.name, player_id=player_id)
 		else:
 			return player
 
@@ -569,11 +565,11 @@ class PowerHandler(HandlerBase):
 
 		if tag == GameTag.CONTROLLER:
 			entity_id = coerce_to_entity_id(entity)
-			ps.packet_tree.manager.register_controller(int(entity_id), int(value))
+			ps.manager.register_controller(int(entity_id), int(value))
 
 		elif tag == GameTag.FIRST_PLAYER:
 			entity_id = coerce_to_entity_id(entity)
-			ps.packet_tree.manager.notify_first_player(int(entity_id))
+			ps.manager.notify_first_player(int(entity_id))
 
 		if isinstance(entity, PlayerReference):
 			entity_id = self._register_player_on_tag_change(ps, entity, tag, value)
@@ -822,8 +818,8 @@ class ChoicesHandler(HandlerBase):
 			return entity_id
 		raise NotImplementedError("Unhandled entity choice: %r" % data)
 
+	@staticmethod
 	def _register_choices(
-		self,
 		ps: ParsingState,
 		ts,
 		choice_id,
@@ -881,7 +877,7 @@ class ChoicesHandler(HandlerBase):
 			ps,
 			ts,
 			int(choice_id),
-			ps.packet_tree.manager.get_player_by_player_id(int(player_id)),
+			ps.manager.get_player_by_player_id(int(player_id)),
 			None,
 			choice_type,
 			min_choice,
@@ -964,7 +960,7 @@ class ChoicesHandler(HandlerBase):
 
 			for player_id, mulligan_choice in ps.mulligan_choices.items():
 				if mulligan_choice.id == ps.chosen_packet.id:
-					ps.packet_tree.manager.create_or_update_player(
+					ps.manager.create_or_update_player(
 						name=player.name,
 						player_id=player_id
 					)
@@ -1092,6 +1088,10 @@ class LogParser:
 		self._current_date = ret
 		self._last_ts = (ts, ret)
 		return ret
+
+	@property
+	def player_manager(self):
+		return self._parsing_state.manager
 
 	def read(self, fp):
 		for line in fp:
