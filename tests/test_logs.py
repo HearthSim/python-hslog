@@ -2,6 +2,7 @@ import pytest
 from hearthstone.enums import FormatType, GameType
 
 from hslog import packets
+from hslog.exceptions import MissingPlayerData
 from hslog.export import EntityTreeExporter, ExporterError, FriendlyPlayerExporter
 from hslog.packets import TagChange
 from hslog.player import InconsistentPlayerIdError
@@ -121,8 +122,9 @@ def test_unknown_human_player(parser):
 
 	packet_tree = parser.games[0]
 	exporter = EntityTreeExporter(packet_tree)
-	exporter.export()
-	assert True
+
+	with pytest.raises(MissingPlayerData):
+		exporter.export()
 
 
 @pytest.mark.regression_suite
@@ -187,5 +189,6 @@ def test_async_player_names(parser):
 
 	packet_tree = parser.games[0]
 	exporter = EntityTreeExporter(packet_tree)
-	exporter.export()
-	assert True
+
+	with pytest.raises(MissingPlayerData):
+		exporter.export()
