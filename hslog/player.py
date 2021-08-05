@@ -230,6 +230,29 @@ class PlayerManager:
 			else:
 				self._players_by_player_id[player_id] = player
 
+		if (
+			player.name is not None and
+			player.name != UNKNOWN_HUMAN_PLAYER and
+			player.entity_id and
+			player.player_id and
+			player.player_id not in self._player_resolution_order
+		):
+			self._player_resolution_order.append(player.player_id)
+		elif (
+			player.name == UNKNOWN_HUMAN_PLAYER and
+			player.entity_id is None and
+			player.player_id is None and
+			self._game_type != GameType.GT_BATTLEGROUNDS and
+			len(self._player_resolution_order) < len(self._players_by_player_id)
+		):
+			unresolved_keys = [
+				k for k in self._players_by_player_id.keys()
+				if k not in self._player_resolution_order
+			]
+
+			if len(unresolved_keys) == 1:
+				player = self._players_by_player_id[unresolved_keys[0]]
+
 		return player
 
 	@staticmethod
