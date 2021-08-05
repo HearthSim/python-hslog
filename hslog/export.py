@@ -3,7 +3,7 @@ from hearthstone.enums import BlockType, GameTag, Zone
 
 from . import packets
 from .exceptions import ExporterError, MissingPlayerData
-from .player import PlayerReference, coerce_to_entity_id
+from .player import coerce_to_entity_id
 
 
 class BaseExporter:
@@ -228,6 +228,9 @@ class EntityTreeExporter(BaseExporter):
 
 	def find_entity(self, entity_id: int, opcode):
 		try:
+			if entity_id is None:
+				import pdb; pdb.set_trace()
+
 			entity = self.game.find_entity_by_id(entity_id)
 		except MissingPlayerData:
 			raise self.EntityNotFound("Error getting entity %r for %s" % (id, opcode))

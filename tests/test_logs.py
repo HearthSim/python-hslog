@@ -3,7 +3,7 @@ from hearthstone.enums import FormatType, GameType
 
 from hslog import packets
 from hslog.exceptions import MissingPlayerData
-from hslog.export import EntityTreeExporter, ExporterError, FriendlyPlayerExporter
+from hslog.export import EntityTreeExporter, FriendlyPlayerExporter
 from hslog.packets import TagChange
 from hslog.player import InconsistentPlayerIdError
 
@@ -195,7 +195,7 @@ def test_async_player_names(parser):
 
 
 @pytest.mark.regression_suite
-def test_shuffle_deck(parser):
+def test_name_aliasing(parser):
 	with open(logfile("88998_missing_player_hash.power.log")) as f:
 		parser.read(f)
 
