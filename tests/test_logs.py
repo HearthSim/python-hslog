@@ -2,8 +2,10 @@ import pytest
 from hearthstone.enums import FormatType, GameType
 
 from hslog import packets
-from hslog.export import EntityTreeExporter, ExporterError, FriendlyPlayerExporter
+from hslog.exceptions import MissingPlayerData
+from hslog.export import EntityTreeExporter, FriendlyPlayerExporter
 from hslog.packets import TagChange
+from hslog.player import InconsistentPlayerIdError
 
 from .conftest import logfile
 
@@ -75,13 +77,9 @@ def test_debugprintgame(parser):
 
 @pytest.mark.regression_suite
 def test_bad_ids(parser):
-	with open(logfile("chaos/change_entity_null_id.power.log")) as f:
-		parser.read(f)
-
-	packet_tree = parser.games[0]
-	exporter = EntityTreeExporter(packet_tree)
-	with pytest.raises(ExporterError):
-		exporter.export()
+	with pytest.raises(InconsistentPlayerIdError):
+		with open(logfile("chaos/change_entity_null_id.power.log")) as f:
+			parser.read(f)
 
 
 @pytest.mark.regression_suite
@@ -124,8 +122,9 @@ def test_unknown_human_player(parser):
 
 	packet_tree = parser.games[0]
 	exporter = EntityTreeExporter(packet_tree)
-	exporter.export()
-	assert True
+
+	with pytest.raises(MissingPlayerData):
+		exporter.export()
 
 
 @pytest.mark.regression_suite
@@ -186,6 +185,18 @@ def test_shuffle_deck(parser):
 @pytest.mark.regression_suite
 def test_async_player_names(parser):
 	with open(logfile("88998_async_player_name.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree)
+
+	with pytest.raises(MissingPlayerData):
+		exporter.export()
+
+
+@pytest.mark.regression_suite
+def test_name_aliasing(parser):
+	with open(logfile("88998_missing_player_hash.power.log")) as f:
 		parser.read(f)
 
 	packet_tree = parser.games[0]

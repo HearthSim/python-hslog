@@ -3,6 +3,7 @@ from hearthstone.enums import BlockType, GameTag, Zone
 
 from . import packets
 from .exceptions import ExporterError, MissingPlayerData
+from .player import coerce_to_entity_id
 
 
 class BaseExporter:
@@ -225,9 +226,9 @@ class EntityTreeExporter(BaseExporter):
 	class EntityNotFound(Exception):
 		pass
 
-	def find_entity(self, id, opcode):
+	def find_entity(self, entity_id: int, opcode):
 		try:
-			entity = self.game.find_entity_by_id(id)
+			entity = self.game.find_entity_by_id(entity_id)
 		except MissingPlayerData:
 			raise self.EntityNotFound("Error getting entity %r for %s" % (id, opcode))
 		if not entity:
@@ -247,13 +248,21 @@ class EntityTreeExporter(BaseExporter):
 		return self.game
 
 	def handle_player(self, packet):
-		id = int(packet.entity)
+		entity_id = coerce_to_entity_id(packet.entity)
+
 		if hasattr(self.packet_tree, "manager"):
 			# If we have a PlayerManager, first we mutate the CreateGame.Player packet.
 			# This will have to change if we're ever able to immediately get the names.
-			player = self.packet_tree.manager.get_player_by_id(id)
+			player = self.packet_tree.manager.get_player_by_entity_id(int(entity_id))
 			packet.name = player.name
-		entity = self.player_class(id, packet.player_id, packet.hi, packet.lo, packet.name)
+
+		entity = self.player_class(
+			entity_id,
+			packet.player_id,
+			packet.hi,
+			packet.lo,
+			packet.name
+		)
 		entity.tags = dict(packet.tags)
 		self.game.register_entity(entity)
 		entity.initial_hero_entity_id = entity.tags.get(GameTag.HERO_ENTITY, 0)
@@ -271,7 +280,7 @@ class EntityTreeExporter(BaseExporter):
 			existing_entity.tags = dict(packet.tags)
 			return existing_entity
 
-		entity = self.card_class(entity_id, packet.card_id)
+		entity = self.card_class(int(entity_id), packet.card_id)
 		entity.tags = dict(packet.tags)
 		self.game.register_entity(entity)
 		return entity
@@ -299,8 +308,10 @@ class EntityTreeExporter(BaseExporter):
 		return entity
 
 	def handle_tag_change(self, packet):
-		entity = self.find_entity(packet.entity, "TAG_CHANGE")
+		entity_id = coerce_to_entity_id(packet.entity)
+		entity = self.find_entity(int(entity_id), "TAG_CHANGE")
 		entity.tag_change(packet.tag, packet.value)
+
 		return entity
 
 

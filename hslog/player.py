@@ -2,159 +2,295 @@
 Classes to provide lazy players that are treatable as an entity ID but
 do not have to receive one immediately.
 """
-from hearthstone.enums import GameTag
+from typing import Dict, List, Optional, Union
 
-from .exceptions import MissingPlayerData, ParsingError
+from hearthstone.enums import GameType
+
+from .exceptions import MissingPlayerData
 from .tokens import UNKNOWN_HUMAN_PLAYER
 
 
-class LazyPlayer:
-	def __init__(self, *args, **kwargs):
-		self.id = None
-		self.name = None
+class PlayerReference:
+	def __init__(
+		self,
+		entity_id: Optional[int] = None,
+		name: Optional[str] = None,
+		player_id: Optional[int] = None
+	):
+		self.entity_id = entity_id
+		self.name = name
+		self.player_id = player_id
+
+	def __eq__(self, other):
+		if not isinstance(other, PlayerReference):
+			return False
+
+		return (
+			self.entity_id == other.entity_id and
+			self.name == other.name and
+			self.player_id == other.player_id
+		)
+
+	def __hash__(self):
+		return hash((self.entity_id, self.name, self.player_id))
 
 	def __repr__(self):
-		return "%s(id=%r, name=%r)" % (self.__class__.__name__, self.id, self.name)
+		return "%s(name=%r, entity_id=%r, player_id=%r)" % (
+			self.__class__.__name__,
+			self.name,
+			self.entity_id,
+			self.player_id
+		)
 
-	def __int__(self):
-		if not self.id:
-			raise MissingPlayerData("Entity ID not available for player %r" % (self.name))
-		return self.id
+
+def coerce_to_entity_id(entity_id_or_player: Union[int, PlayerReference]) -> int:
+	if isinstance(entity_id_or_player, PlayerReference):
+		if entity_id_or_player.entity_id is None:
+			raise MissingPlayerData(
+				"Entity ID not available for player %r" % entity_id_or_player.name
+			)
+
+		return entity_id_or_player.entity_id
+	else:
+		return entity_id_or_player
+
+
+class InconsistentEntityIdError(Exception):
+
+	def __init__(self, player: PlayerReference, entity_id: int):
+		self.player = player
+		self.entity_id = entity_id
+
+
+class InconsistentPlayerIdError(Exception):
+
+	def __init__(self, player: PlayerReference, player_id: int):
+		self.player = player
+		self.player_id = player_id
 
 
 class PlayerManager:
 	def __init__(self):
-		self._players_by_id = {}
-		self._players_by_name = {}
-		self._players_by_player_id = {}
-		self._entity_controller_map = {}
-		self._registered_names = []
-		self._unregistered_names = set()
-		self.ai_player = None
+		self._entity_controller_map: Dict[int, int] = {}
+		self._game_type = None
+		self._name_aliases: Dict[str, str] = {}
+		self._players_by_name: Dict[str, PlayerReference] = {}
+		self._players_by_entity_id: Dict[int, PlayerReference] = {}
+		self._players_by_player_id: Dict[int, PlayerReference] = {}
+		self._player_resolution_order: List[int] = []
 
-	def get_player_by_id(self, id):
-		assert id, "Expected an id for get_player_by_id (got %r)" % (id)
-		if id not in self._players_by_id:
-			lazy_player = LazyPlayer()
-			lazy_player.id = id
-			self._players_by_id[id] = lazy_player
-		return self._players_by_id[id]
+		self.ai_player: Optional[PlayerReference] = None
+		self.first_player: Optional[PlayerReference] = None
 
-	def get_player_by_name(self, name):
-		assert name, "Expected a name for get_player_by_name (got %r)" % (name)
+	def _maybe_alias_name(self, name):
+		if "#" in name:
+			alias = name[:name.index("#")]
+			if alias in self._name_aliases:
+				assert self._name_aliases[alias] == name
+			else:
+				self._name_aliases[alias] = name
+
+	def get_player_by_entity_id(self, entity_id: int) -> Optional[PlayerReference]:
+		return self._players_by_entity_id.get(entity_id)
+
+	def get_player_by_player_id(self, player_id: int) -> Optional[PlayerReference]:
+		return self._players_by_player_id.get(player_id)
+
+	def _guess_player_entity_id(self, name: str) -> Optional[PlayerReference]:
+		assert name, "Expected a name for get_player_by_name (got %r)" % name
 		if name not in self._players_by_name:
-			if len(self._registered_names) == 1 and name != UNKNOWN_HUMAN_PLAYER:
-				# Maybe we can figure the name out right there and then
-				other_player = self.get_player_by_name(self._registered_names[0])
-				id = 3 if other_player == 2 else 2
-				try:
-					self.register_player_name(name, id)
-				except KeyError:
-					raise ParsingError("Unseen player name %r" % (name))
-			elif len(self._registered_names) > 1 and self.ai_player:
+			if (
+				len(self._players_by_name) == 1 and
+				name != UNKNOWN_HUMAN_PLAYER and
+				self._game_type != GameType.GT_BATTLEGROUNDS
+			):
+				# Maybe we can figure the name out right there and then.
+
+				# NOTE: This is a neat trick, but it doesn't really work (and leads to
+				# errors) when there are lots of players such that we can't predict the
+				# entity ids. Hence the check for Battlegrounds above.
+
+				other_player = next(iter(self._players_by_name.values()))
+				entity_id = 3 if other_player.entity_id == 2 else 2
+				if entity_id in self._players_by_entity_id:
+					player = self._players_by_entity_id[entity_id]
+					player.name = name
+
+					self._players_by_name[name] = player
+					self._maybe_alias_name(name)
+
+					return player
+				else:
+					return self.create_or_update_player(
+						name=name,
+						entity_id=entity_id
+					)
+			elif len(self._players_by_name) > 1 and self.ai_player:
 				# If we are registering our 3rd (or more) name, and we are in an AI game...
 				# then it's probably the innkeeper with a new name.
-				self.register_player_name(name, int(self.ai_player))
+
+				return self.create_or_update_player(
+					name=name,
+					entity_id=self.ai_player.entity_id
+				)
 			else:
-				lazy_player = LazyPlayer()
-				lazy_player.name = name
-				self._players_by_name[name] = lazy_player
-				self._unregistered_names.add(name)
-		return self._players_by_name[name]
+				return None
 
-	def new_player(self, id, player_id, is_ai):
-		lazy_player = self.get_player_by_id(id)
-		self._players_by_player_id[player_id] = lazy_player
+	def create_or_update_player(
+		self,
+		name: Optional[str] = None,
+		entity_id: Optional[int] = None,
+		player_id: Optional[int] = None,
+		is_ai: bool = False
+	) -> PlayerReference:
+		assert name or entity_id or player_id
+
+		player: Optional[PlayerReference] = None
+
+		if name and name != UNKNOWN_HUMAN_PLAYER:
+			if name in self._players_by_name:
+				player = self._players_by_name[name]
+			elif name in self._name_aliases:
+				player = self._players_by_name[self._name_aliases[name]]
+			else:
+				player = None
+
+		if player is None:
+			if entity_id and entity_id in self._players_by_entity_id:
+				player = self._players_by_entity_id[entity_id]
+			elif player_id and player_id in self._players_by_player_id:
+				player = self._players_by_player_id[player_id]
+			else:
+				player = PlayerReference(
+					name=name,
+					entity_id=entity_id,
+					player_id=player_id,
+				)
+
 		if is_ai:
-			self.ai_player = lazy_player
-		return lazy_player
+			self.ai_player = player
 
-	def register_controller(self, entity, controller):
-		self._entity_controller_map[entity] = controller
+		if name:
+			if player.name is None or player.name == UNKNOWN_HUMAN_PLAYER:
+				player.name = name
+			elif player.name != name and player.name != self._name_aliases.get(name):
+				if player == self.ai_player:
 
-	def register_player_name_by_player_id(self, name, player_id):
-		# We probably should raise an error if the name is not in _unregistered_names
-		# In practice this breaks though if we have a game with identical player names
-		if name in self._players_by_name and name in self._unregistered_names:
-			self._unregistered_names.remove(name)
+					# Need to check whether this is just the Innkeeper's name changing,
+					# which happens for all sorts of valid reasons
 
-		lazy_player_by_player_id = self._players_by_player_id[player_id]
-		lazy_player_by_player_id.name = name
+					player.name = name
+				else:
+					raise AssertionError()
 
-		if name != UNKNOWN_HUMAN_PLAYER:
-			self._registered_names.append(name)
+			if (
+				name != UNKNOWN_HUMAN_PLAYER and
+				name not in self._players_by_name and
+				name not in self._name_aliases
+			):
+				if not player.entity_id and not entity_id:
 
-		self._players_by_name[name] = lazy_player_by_player_id.id
+					# We don't have an entity_id but we do have a name; let's see if we
+					# can guess the entity id...
 
-		return lazy_player_by_player_id
+					self._guess_player_entity_id(name)
+					if name in self._players_by_name:
+						player = self._players_by_name[name]
 
-	def register_player_name(self, name, id):
-		"""
-		Registers a link between \a name and \a id.
-		Note that this does not support two different players with the same name.
-		"""
-		if name in self._players_by_name:
-			self._players_by_name[name].id = id
-			self._unregistered_names.remove(name)
-		self._players_by_name[name] = id
-		lazy_player_by_id = self._players_by_id[id]
-		lazy_player_by_id.name = name
-		self._registered_names.append(name)
+				self._players_by_name[name] = player
+				self._maybe_alias_name(name)
+			elif player.name != name and player.name != self._name_aliases.get(name):
+				raise AssertionError()
 
-		if len(self._unregistered_names) == 1:
-			assert len(self._players_by_id) == 2
-			id1, id2 = self._players_by_id.keys()
-			other_id = id2 if id == id1 else id1
-			other_name = list(self._unregistered_names)[0]
-			self.register_player_name(other_name, other_id)
+		if entity_id:
+			if player.entity_id is None:
+				player.entity_id = entity_id
+			elif player.entity_id != entity_id:
+				raise InconsistentEntityIdError(player, entity_id)
 
-		return lazy_player_by_id
+			if player.entity_id in self._players_by_entity_id:
+				self._safe_merge_player_references(
+					self._players_by_entity_id[player.entity_id],
+					player,
+				)
+			else:
+				self._players_by_entity_id[entity_id] = player
 
-	def register_player_name_mulligan(self, packet):
-		"""
-		Attempt to register player names by looking at Mulligan choice packets.
-		In Hearthstone 6.0+, registering a player name using tag changes is not
-		available as early as before. That means games conceded at Mulligan no
-		longer have player names.
-		This technique uses the cards offered in Mulligan instead, registering
-		the name of the packet's entity with the card's controller as PlayerID.
-		"""
-		lazy_player = packet.entity
-		if isinstance(lazy_player, int) or lazy_player.id:
-			# The player is already registered, ignore.
-			return
-		if not lazy_player.name:
-			# If we don't have the player name, we can't use this at all
-			return
+		if player_id:
+			if player.player_id is None:
+				player.player_id = player_id
+			elif player.player_id != player_id:
+				raise InconsistentPlayerIdError(player, player_id)
 
-		for choice in packet.choices:
-			if choice not in self._entity_controller_map:
-				raise ParsingError("Unknown entity ID in choice: %r" % (choice))
-			player_id = self._entity_controller_map[choice]
-			# We need ENTITY_ID for register_player_name()
-			if player_id not in self._players_by_player_id:
-				raise ParsingError("Unseen player id %r" % (player_id))
-			entity_id = int(self._players_by_player_id[player_id])
-			packet.entity = entity_id
-			return self.register_player_name(lazy_player.name, entity_id)
+			if player.player_id in self._players_by_player_id:
+				self._safe_merge_player_references(
+					self._players_by_player_id[player.player_id],
+					player,
+				)
+			else:
+				self._players_by_player_id[player_id] = player
 
-	def register_player_name_on_tag_change(self, player, tag, value):
-		"""
-		Triggers on every TAG_CHANGE where the corresponding entity is a LazyPlayer.
-		Will attempt to return a new value instead
-		"""
-		if tag == GameTag.ENTITY_ID:
-			# This is the simplest check. When a player entity is declared,
-			# its ENTITY_ID is not available immediately (in pre-6.0).
-			# If we get a matching ENTITY_ID, then we can use that to match it.
-			return self.register_player_name(player.name, value)
-		elif tag == GameTag.LAST_CARD_PLAYED:
-			# This is a fallback to register_player_name_mulligan in case the mulligan
-			# phase is not available in this game (spectator mode, reconnects).
-			if value not in self._entity_controller_map:
-				raise ParsingError("Unknown entity ID on TAG_CHANGE: %r" % (value))
-			player_id = self._entity_controller_map[value]
-			entity_id = int(self._players_by_player_id[player_id])
-			return self.register_player_name(player.name, entity_id)
+		if (
+			player.name is not None and
+			player.name != UNKNOWN_HUMAN_PLAYER and
+			player.entity_id and
+			player.player_id and
+			player.player_id not in self._player_resolution_order
+		):
+			self._player_resolution_order.append(player.player_id)
+		elif (
+			player.name == UNKNOWN_HUMAN_PLAYER and
+			player.entity_id is None and
+			player.player_id is None and
+			self._game_type != GameType.GT_BATTLEGROUNDS and
+			len(self._player_resolution_order) < len(self._players_by_player_id)
+		):
+			unresolved_keys = [
+				k for k in self._players_by_player_id.keys()
+				if k not in self._player_resolution_order
+			]
+
+			if len(unresolved_keys) == 1:
+				player = self._players_by_player_id[unresolved_keys[0]]
 
 		return player
+
+	@staticmethod
+	def _safe_merge_player_references(left: PlayerReference, right: PlayerReference):
+		if left.entity_id is None:
+			if right.entity_id is not None:
+				left.entity_id = right.entity_id
+		elif right.entity_id is None:
+			right.entity_id = left.entity_id
+		else:
+			assert left.entity_id == right.entity_id
+
+		if left.player_id is None:
+			if right.player_id is not None:
+				left.player_id = right.player_id
+		elif right.player_id is None:
+			right.player_id = left.player_id
+		else:
+			assert left.player_id == right.player_id
+
+		if left.name is None or left.name == UNKNOWN_HUMAN_PLAYER:
+			if right.name is not None:
+				left.name = right.name
+		elif right.player_id is None or right.name == UNKNOWN_HUMAN_PLAYER:
+			if left.name is not None:
+				right.name = left.name
+
+	def notify_first_player(self, entity_id: int):
+		if entity_id in self._players_by_entity_id:
+			first_player = self._players_by_entity_id[entity_id]
+		else:
+			first_player = PlayerReference(entity_id=entity_id)
+			self._players_by_entity_id[entity_id] = first_player
+
+		self.first_player = first_player
+
+	def register_controller(self, entity_id: int, player_id: int):
+		self._entity_controller_map[entity_id] = player_id
+
+	def get_controller_by_entity_id(self, entity_id: int) -> Optional[int]:
+		return self._entity_controller_map.get(entity_id)

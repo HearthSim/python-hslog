@@ -57,9 +57,9 @@ def test_create_empty_game():
 	assert packet.entity == game.id == 1
 
 	# Player packet objects are not the same as players
-	assert int(packet.players[0].entity) == game.players[0].id
+	assert packet.players[0].entity.entity_id == game.players[0].id
 	assert packet.players[0].player_id == game.players[0].player_id
-	assert int(packet.players[1].entity) == game.players[1].id
+	assert packet.players[1].entity.entity_id == game.players[1].id
 	assert packet.players[1].player_id == game.players[1].player_id
 
 	# All tags should be empty (we didn't pass any)
