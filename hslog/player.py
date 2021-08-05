@@ -2,10 +2,11 @@
 Classes to provide lazy players that are treatable as an entity ID but
 do not have to receive one immediately.
 """
-from typing import Optional, Dict, List
+from typing import Dict, List, Optional, Union
 
 from hearthstone.enums import GameType
 
+from .exceptions import MissingPlayerData
 from .tokens import UNKNOWN_HUMAN_PLAYER
 
 
@@ -40,6 +41,18 @@ class PlayerReference:
 			self.entity_id,
 			self.player_id
 		)
+
+
+def coerce_to_entity_id(entity_id_or_player: Union[int, PlayerReference]) -> int:
+	if isinstance(entity_id_or_player, PlayerReference):
+		if entity_id_or_player.entity_id is None:
+			raise MissingPlayerData(
+				"Entity ID not available for player %r" % entity_id_or_player.name
+			)
+
+		return entity_id_or_player.entity_id
+	else:
+		return entity_id_or_player
 
 
 class InconsistentEntityIdError(Exception):

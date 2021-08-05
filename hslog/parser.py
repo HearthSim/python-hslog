@@ -1,6 +1,6 @@
 import logging
 from datetime import datetime, timedelta
-from typing import Optional, Callable, Any, Union, List, Dict
+from typing import Any, Callable, Dict, List, Optional, Union
 
 from aniso8601 import parse_time
 from hearthstone.enums import (
@@ -10,9 +10,11 @@ from hearthstone.enums import (
 
 from . import packets, tokens
 from .exceptions import ParsingError, RegexParsingError
-from .packets import PacketTree, Packet, CreateGame, ChosenEntities, Block, SubSpell, \
-	Choices, MetaData, SendChoices
-from .player import PlayerManager, PlayerReference
+from .packets import (
+	Block, Choices, ChosenEntities, CreateGame,
+	MetaData, Packet, PacketTree, SendChoices, SubSpell
+)
+from .player import PlayerManager, PlayerReference, coerce_to_entity_id
 from .utils import parse_enum, parse_tag
 
 
@@ -292,10 +294,7 @@ class PowerHandler(HandlerBase):
 				# We need to know entity controllers for player name registration
 
 				assert hasattr(ps.entity_packet, "entity")
-				entity_id = ps.entity_packet.entity.entity_id \
-					if isinstance(ps.entity_packet.entity, PlayerReference) \
-					else ps.entity_packet.entity
-
+				entity_id = coerce_to_entity_id(ps.entity_packet.entity)  # noqa
 				ps.packet_tree.manager.register_controller(int(entity_id), int(value))
 
 		elif opcode.startswith("Info["):
@@ -569,11 +568,11 @@ class PowerHandler(HandlerBase):
 		self._check_for_mulligan_hack(ps, ts, tag, value)
 
 		if tag == GameTag.CONTROLLER:
-			entity_id = entity.entity_id if isinstance(entity, PlayerReference) else entity
+			entity_id = coerce_to_entity_id(entity)
 			ps.packet_tree.manager.register_controller(int(entity_id), int(value))
 
 		elif tag == GameTag.FIRST_PLAYER:
-			entity_id = entity.entity_id if isinstance(entity, PlayerReference) else entity
+			entity_id = coerce_to_entity_id(entity)
 			ps.packet_tree.manager.notify_first_player(int(entity_id))
 
 		if isinstance(entity, PlayerReference):
