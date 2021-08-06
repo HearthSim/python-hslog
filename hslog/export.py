@@ -1,4 +1,4 @@
-from typing import Optional
+from typing import Dict, Optional
 
 from hearthstone.entities import Card, Game, Player
 from hearthstone.enums import BlockType, GameTag, Zone
@@ -333,7 +333,7 @@ class FriendlyPlayerExporter(BaseExporter):
 	"""
 	def __init__(self, packet_tree):
 		super().__init__(packet_tree)
-		self._controller_map = {}
+		self._controller_map: Dict[int, int] = {}
 		self.friendly_player = None
 		self._ai_player = None
 		self._non_ai_players = []
@@ -360,17 +360,17 @@ class FriendlyPlayerExporter(BaseExporter):
 
 	def handle_tag_change(self, packet):
 		if packet.tag == GameTag.CONTROLLER:
-			self._controller_map[packet.entity] = packet.value
+			self._controller_map[int(packet.entity)] = packet.value
 
 	def handle_full_entity(self, packet):
 		tags = dict(packet.tags)
 		if GameTag.CONTROLLER in tags:
-			self._controller_map[packet.entity] = tags[GameTag.CONTROLLER]
+			self._controller_map[int(packet.entity)] = tags[GameTag.CONTROLLER]
 
 	def handle_show_entity(self, packet):
 		tags = dict(packet.tags)
 		if GameTag.CONTROLLER in tags:
-			self._controller_map[packet.entity] = tags[GameTag.CONTROLLER]
+			self._controller_map[int(packet.entity)] = tags[GameTag.CONTROLLER]
 
 		if tags.get(GameTag.ZONE) != Zone.HAND:
 			# Ignore cards already in play (such as enchantments, common in TB)
