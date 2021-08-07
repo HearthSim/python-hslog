@@ -466,7 +466,7 @@ class PowerHandler(HandlerBase):
 		ps.current_block = block
 		return block
 
-	def full_entity(self, ps: ParsingState, ts, entity_id: int, card_id: str):
+	def _full_entity(self, ps: ParsingState, ts, entity_id: int, card_id: str):
 		ps.entity_packet = packets.FullEntity(ts, entity_id, card_id)
 		ps.register_packet(ps.entity_packet)
 
@@ -482,9 +482,11 @@ class PowerHandler(HandlerBase):
 
 		return ps.entity_packet
 
-	def full_entity_update(self, ps: ParsingState, ts, entity, card_id):
-		entity_id = ps.parse_entity_id(entity)
-		return self.full_entity(ps, ts, entity_id, card_id)
+	def full_entity(self, ps: ParsingState, ts, entity_id: str, card_id: str):
+		return self._full_entity(ps, ts, int(entity_id), card_id)
+
+	def full_entity_update(self, ps: ParsingState, ts, entity_id: str, card_id: str):
+		return self._full_entity(ps, ts, ps.parse_entity_id(entity_id), card_id)
 
 	@staticmethod
 	def show_entity(ps: ParsingState, ts, entity, card_id):
