@@ -180,6 +180,14 @@ class PlayerManager:
 					# which happens for all sorts of valid reasons
 
 					player.name = name
+				elif name == UNKNOWN_HUMAN_PLAYER:
+
+					# If we're pretty sure we know which player's being referred to and it
+					# looks like the log is trying to set the player name to "UNKOWN HUMAN
+					# PLAYER" it could be a little bit of asynchrony that we can ignore.
+					# Just treat this like the log used the right name.
+
+					name = player.name
 				else:
 					raise AssertionError()
 
