@@ -203,3 +203,25 @@ def test_name_aliasing(parser: LogParser):
 	exporter = EntityTreeExporter(packet_tree, player_manager=parser.player_manager)
 	exporter.export()
 	assert True
+
+
+@pytest.mark.regression_suite
+def test_mercenaries_solo_bounty(parser: LogParser):
+	with open(logfile("93227_mercenaries_solo_bounty.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree, player_manager=parser.player_manager)
+	exporter.export()
+	assert True
+
+
+@pytest.mark.regression_suite
+def test_mercenaries_solo_pvp(parser: LogParser):
+	with open(logfile("93227_mercenaries_solo_pvp.power.log")) as f:
+		parser.read(f)
+
+	packet_tree = parser.games[0]
+	exporter = EntityTreeExporter(packet_tree, player_manager=parser.player_manager)
+	exporter.export()
+	assert True

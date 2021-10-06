@@ -8,6 +8,7 @@ from hearthstone.enums import GameType
 
 from .exceptions import MissingPlayerData
 from .tokens import UNKNOWN_HUMAN_PLAYER
+from .utils import is_mercenaries_game_type
 
 
 class PlayerReference:
@@ -227,7 +228,7 @@ class PlayerManager:
 		if player_id:
 			if player.player_id is None:
 				player.player_id = player_id
-			elif player.player_id != player_id:
+			elif player.player_id != player_id and not is_mercenaries_game_type(self._game_type):
 				raise InconsistentPlayerIdError(player, player_id)
 
 			if player.player_id in self._players_by_player_id:

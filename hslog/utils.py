@@ -1,4 +1,4 @@
-from hearthstone.enums import TAG_TYPES, GameTag
+from hearthstone.enums import TAG_TYPES, GameTag, GameType
 
 
 def parse_enum(enum, value):
@@ -20,3 +20,13 @@ def parse_tag(tag, value):
 	else:
 		raise NotImplementedError("Invalid string value %r = %r" % (tag, value))
 	return tag, value
+
+
+def is_mercenaries_game_type(game_type: GameType):
+	return game_type in (
+		GameType.GT_MERCENARIES_AI_VS_AI,
+		GameType.GT_MERCENARIES_FRIENDLY,
+		GameType.GT_MERCENARIES_PVE_COOP,
+		GameType.GT_MERCENARIES_PVE,
+		GameType.GT_MERCENARIES_PVP,
+	)
