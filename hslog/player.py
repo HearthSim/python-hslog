@@ -103,7 +103,8 @@ class PlayerManager:
 			if (
 				len(self._players_by_name) == 1 and
 				name != UNKNOWN_HUMAN_PLAYER and
-				self._game_type != GameType.GT_BATTLEGROUNDS
+				self._game_type != GameType.GT_BATTLEGROUNDS and
+				not is_mercenaries_game_type(self._game_type)
 			):
 				# Maybe we can figure the name out right there and then.
 
