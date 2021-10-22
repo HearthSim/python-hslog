@@ -239,9 +239,13 @@ class EntityTreeExporter(BaseExporter):
 		try:
 			entity = self.game.find_entity_by_id(entity_id)
 		except MissingPlayerData:
-			raise self.EntityNotFound("Error getting entity %r for %s" % (id, opcode))
+			raise self.EntityNotFound(
+				f"Error getting entity {entity_id} for {opcode}"
+			)
 		if not entity:
-			raise self.EntityNotFound("Attempting %s on entity %r (not found)" % (opcode, id))
+			raise self.EntityNotFound(
+				f"Attempting {opcode} on entity {entity_id} (not found)"
+			)
 		return entity
 
 	def handle_block(self, packet):
