@@ -1,4 +1,4 @@
-from typing import Dict, Optional
+from typing import Dict, Optional, cast
 
 from hearthstone.entities import Card, Game, Player
 from hearthstone.enums import BlockType, GameTag, Zone
@@ -37,13 +37,13 @@ class BaseExporter:
 			packets.ShuffleDeck: self.handle_shuffle_deck
 		}
 
-	def export(self):
+	def export(self) -> "BaseExporter":
 		for packet in self.packet_tree:
 			self.export_packet(packet)
 		self.flush()
 		return self
 
-	def export_packet(self, packet):
+	def export_packet(self, packet: packets.Packet):
 		packet_type = packet.__class__
 		handler = self.dispatch.get(packet_type, None)
 		if not handler:
@@ -54,66 +54,68 @@ class BaseExporter:
 		"""Finalize the export and allow any intermediate state to be cleaned up."""
 		pass
 
-	def handle_create_game(self, packet):
+	def handle_create_game(self, packet: packets.CreateGame):
 		pass
 
-	def handle_player(self, packet):
+	def handle_player(self, packet: packets.CreateGame.Player):
 		pass
 
-	def handle_block(self, packet):
+	def handle_block(self, packet: packets.Block):
 		for p in packet.packets:
 			self.export_packet(p)
 
-	def handle_full_entity(self, packet):
+	def handle_full_entity(self, packet: packets.FullEntity):
 		pass
 
-	def handle_hide_entity(self, packet):
+	def handle_hide_entity(self, packet: packets.HideEntity):
 		pass
 
-	def handle_show_entity(self, packet):
+	def handle_show_entity(self, packet: packets.ShowEntity):
 		pass
 
-	def handle_change_entity(self, packet):
+	def handle_change_entity(self, packet: packets.ChangeEntity):
 		pass
 
-	def handle_tag_change(self, packet):
+	def handle_tag_change(self, packet: packets.TagChange):
 		pass
 
-	def handle_metadata(self, packet):
+	def handle_metadata(self, packet: packets.MetaData):
 		pass
 
-	def handle_choices(self, packet):
+	def handle_choices(self, packet: packets.Choices):
 		pass
 
-	def handle_send_choices(self, packet):
+	def handle_send_choices(self, packet: packets.SendChoices):
 		pass
 
-	def handle_chosen_entities(self, packet):
+	def handle_chosen_entities(self, packet: packets.ChosenEntities):
 		pass
 
-	def handle_options(self, packet):
+	def handle_options(self, packet: packets.Options):
 		pass
 
-	def handle_option(self, packet):
+	def handle_option(self, packet: packets.Option):
 		pass
 
-	def handle_send_option(self, packet):
+	def handle_send_option(self, packet: packets.SendOption):
 		pass
 
-	def handle_reset_game(self, packet):
+	def handle_reset_game(self, packet: packets.ResetGame):
 		pass
 
-	def handle_sub_spell(self, packet):
+	def handle_sub_spell(self, packet: packets.SubSpell):
 		for p in packet.packets:
 			self.export_packet(p)
 
-	def handle_cached_tag_for_dormant_change(self, packet):
+	def handle_cached_tag_for_dormant_change(
+		self, packet: packets.CachedTagForDormantChange
+	):
 		pass
 
-	def handle_vo_spell(self, packet):
+	def handle_vo_spell(self, packet: packets.VOSpell):
 		pass
 
-	def handle_shuffle_deck(self, packet):
+	def handle_shuffle_deck(self, packet: packets.ShuffleDeck):
 		pass
 
 
@@ -235,7 +237,7 @@ class EntityTreeExporter(BaseExporter):
 
 		self.player_manager = player_manager
 
-	def find_entity(self, entity_id: int, opcode):
+	def find_entity(self, entity_id: int, opcode) -> Card:
 		try:
 			entity = self.game.find_entity_by_id(entity_id)
 		except MissingPlayerData:
@@ -246,7 +248,7 @@ class EntityTreeExporter(BaseExporter):
 			raise self.EntityNotFound(
 				f"Attempting {opcode} on entity {entity_id} (not found)"
 			)
-		return entity
+		return cast(Card, entity)
 
 	def handle_block(self, packet):
 		if packet.type == BlockType.GAME_RESET:
