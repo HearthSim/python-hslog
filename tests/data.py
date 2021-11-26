@@ -198,6 +198,32 @@ D 08:59:23.0098315 GameState.DebugPrintPower() -     BLOCK_END
 D 08:59:23.0098315 GameState.DebugPrintPower() - BLOCK_END
 """.strip()
 
+MERCENARIES_SUB_SPELL_BLOCK = """
+D 07:21:26.4991775 GameState.DebugPrintPower() - BLOCK_START BlockType=POWER Entity=55 EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=0 Target=0 SubOption=-1 
+D 07:21:26.4991775 GameState.DebugPrintPower() -     SUB_SPELL_START - SpellPrefabGUID=ReuseFX_Missile_Object)Bomb_Dynamite_Super:63de8756b8c2c704ba59d9a31ed4e820 Source=34 TargetCount=1
+D 07:21:26.4991775 GameState.DebugPrintPower() -                       Source = [entityName=Mad Bomber id=34 zone=PLAY zonePos=1 cardId=LETL_821H player=2]
+D 07:21:26.4991775 GameState.DebugPrintPower() -                       Targets[0] = [entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2]
+D 07:21:26.4991775 GameState.DebugPrintPower() -         META_DATA - Meta=TARGET Data=0 InfoCount=1
+D 07:21:26.4991775 GameState.DebugPrintPower() -                     Info[0] = [entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2]
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=2187 value=55 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=PREDAMAGE value=5 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=1173 value=37 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=2187 value=0 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=PREDAMAGE value=0 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=1173 value=0 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=PREDAMAGE value=5 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=PREDAMAGE value=0 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         META_DATA - Meta=DAMAGE Data=5 InfoCount=1
+D 07:21:26.4991775 GameState.DebugPrintPower() -                     Info[0] = [entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2]
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=LAST_AFFECTED_BY value=55 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=DAMAGE value=5 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         BLOCK_START BlockType=TRIGGER Entity=GameEntity EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=10 Target=0 SubOption=-1 TriggerKeyword=TAG_NOT_SET
+D 07:21:26.4991775 GameState.DebugPrintPower() -             TAG_CHANGE Entity=[entityName=Powdered Keg id=37 zone=PLAY zonePos=2 cardId=LETL_821H3 player=2] tag=1775 value=1 
+D 07:21:26.4991775 GameState.DebugPrintPower() -         BLOCK_END
+D 07:21:26.4991775 GameState.DebugPrintPower() -     SUB_SPELL_END
+D 07:21:26.4991775 GameState.DebugPrintPower() - BLOCK_END
+""".strip()
+
 
 CACHED_TAG_FOR_DORMANT_CHANGE = """
 D 21:56:48.2304744 GameState.DebugPrintPower() -         CACHED_TAG_FOR_DORMANT_CHANGE Entity=[entityName=Selfless Hero id=417 zone=PLAY zonePos=1 cardId=OG_221 player=13] tag=DEATHRATTLE value=1

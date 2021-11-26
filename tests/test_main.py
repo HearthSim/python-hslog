@@ -438,6 +438,26 @@ def test_sub_spell_battlegrounds():
 	assert sub_spell_packet.targets == []
 
 
+def test_sub_spell_mercenaries():
+	parser = LogParser()
+	parser.read(StringIO(data.INITIAL_GAME))
+
+	parser.read(StringIO(data.MERCENARIES_SUB_SPELL_BLOCK))
+	parser.flush()
+
+	packet_tree = parser.games[0]
+	power_block = packet_tree.packets[-1]
+	assert len(power_block.packets) == 1
+	sub_spell_packet = power_block.packets[0]
+
+	assert sub_spell_packet.spell_prefab_guid == (
+		"ReuseFX_Missile_Object)Bomb_Dynamite_Super:63de8756b8c2c704ba59d9a31ed4e820"
+	)
+	assert sub_spell_packet.source == 34
+	assert sub_spell_packet.target_count == 1
+	assert sub_spell_packet.targets == [37]
+
+
 def test_options_missing_block_end():
 	parser = LogParser()
 	parser.read(StringIO(data.INITIAL_GAME))
