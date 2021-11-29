@@ -10,7 +10,7 @@ from hearthstone.enums import (
 )
 
 from hslog import LogParser, packets
-from hslog.exceptions import ParsingError
+from hslog.exceptions import CorruptLogError, ParsingError
 from hslog.parser import parse_initial_tag
 
 from . import data
@@ -516,3 +516,13 @@ class TestLogParser:
 		shuffle_deck_packet = packet_tree.packets[1]
 
 		assert shuffle_deck_packet.player_id == 2
+
+	def test_nul_byte(self):
+		parser = LogParser()
+		parser.read(StringIO(data.INITIAL_GAME))
+
+		with pytest.raises(
+			CorruptLogError,
+			match=r"Log contains contains a NUL \(0x00\) byte"
+		):
+			parser.read(StringIO(data.CORRUPT_SHOW_ENTITY))

@@ -243,3 +243,31 @@ D 20:02:31.8466584 GameState.DebugPrintPower() -     VO_SPELL - BrassRingGuid=VO
 SHUFFLE_DECK = """
 D 17:21:14.4464414 GameState.DebugPrintPower() -     SHUFFLE_DECK PlayerID=2
 """.strip()
+
+
+CORRUPT_SHOW_ENTITY = """
+D 13:24:38.7829954 GameState.DebugPrintPower() -             SHOW_ENTITY - Updating Entity=9537 CardID=BG21_017
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=CONTROLLER value=11
+D 13:24:38.7829954 GameState.DebugPrintPower() -  \x01\x00\x10\x00\x01 \x10\x00\x03\x00\x10\x00   tag=CARDTYPE value=MINION
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=TAG_LAST_KNOWN_COST_IN_HAND value=4
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=479 value=4
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=COST value=4
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=ATK value=4
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=HEALTH value=4
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=TRIGGER_VISUAL value=1
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=ZONE value=PLAY
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=ENTITY_ID value=9537
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=CARDRACE value=PIRATE
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=CREATOR value=9508
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=1037 value=3
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=1067 value=0
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=1068 value=0
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=CREATOR_DBID value=72230
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=1429 value=73951
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=TECH_LEVEL value=3
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=IS_BACON_POOL_MINION value=1
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=SUPPRESS_ALL_SUMMON_VO value=1
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=SPAWN_TIME_COUNT value=1
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=COPIED_FROM_ENTITY_ID value=9531
+D 13:24:38.7829954 GameState.DebugPrintPower() -                 tag=1596 value=1
+""".strip()

@@ -14,6 +14,13 @@ class RegexParsingError(ParsingError):
 	pass
 
 
+class CorruptLogError(ParsingError):
+	"""
+	Raised when a log is obviously corrupt, for example when containing NUL (0x00) bytes.
+	"""
+	pass
+
+
 class ExporterError(Exception):
 	"""
 	Generic exception that happens during PacketTree export.

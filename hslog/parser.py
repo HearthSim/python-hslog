@@ -9,7 +9,7 @@ from hearthstone.enums import (
 )
 
 from . import packets, tokens
-from .exceptions import ParsingError, RegexParsingError
+from .exceptions import CorruptLogError, ParsingError, RegexParsingError
 from .packets import (
 	Block, Choices, ChosenEntities, CreateGame,
 	MetaData, Packet, PacketTree, SendChoices, SubSpell
@@ -327,6 +327,8 @@ class PowerHandler(HandlerBase):
 				return
 			ps.current_block.targets.append(entity)
 		else:
+			if "\x00" in data:
+				raise CorruptLogError("Log contains contains a NUL (0x00) byte")
 			raise NotImplementedError(data)
 
 	def handle_power(self, ps: ParsingState, ts, opcode, data):
