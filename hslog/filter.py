@@ -4,7 +4,7 @@ from typing import IO, List, Optional, Tuple, Union
 from hearthstone.enums import GameTag
 
 from hslog import tokens
-from hslog.exceptions import RegexParsingError
+from hslog.exceptions import CorruptLogError, RegexParsingError
 from hslog.utils import parse_tag
 
 
@@ -461,7 +461,11 @@ class BattlegroundsLogFilter(Iterable):
                 self.num_lines_emitted += 1
                 return self._flushed_lines.pop(0)
 
-            line = self._fp.readline()
+            try:
+                line = self._fp.readline()
+            except UnicodeDecodeError:
+                raise CorruptLogError("Unable to decode Unicode")
+
             if line == "":
                 raise StopIteration()
 
