@@ -84,6 +84,20 @@ could only happen if the player is friendly.
 This behaviour is undefined when the log contains a "double-spectate" (both sides
 of the games spectated at the same time).
 
+## Usage example
+
+```python
+from hslog import LogParser
+
+parser = LogParser()
+woth open("path/to/Power.log") as f:
+    parser.read(f)
+
+packet_tree = parser.games[0]           # first game
+
+game = packet_tree.export().game
+```
+
 
 ## License
 
