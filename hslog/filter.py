@@ -88,7 +88,8 @@ class BattlegroundsLogFilter(Iterable):
         (such as those for DEATHRATTLEs) are discarded; ATTACK blocks for heroes will cause
         the next 4 blocks to be preserved, consistent with the logic for refreshing the
         `battlegrounds_combat_snapshot` materialized view
-    - DEATHS blocks with no subblocks are discarded
+    - DEATHS blocks with no subblocks and no TAG_CHANGES targeting PLAYER_TECH_LEVEL are
+        discarded
     - All options messages (from DebugPrintOptions) are discarded
     - Blacklisted and unknown tags for FULL_ENTITY and SHOW_ENTITY messages are discarded
     - TAG_CHANGES containing blacklisted and unknown tags are discarded
@@ -363,29 +364,34 @@ class BattlegroundsLogFilter(Iterable):
         # part of the same enclosing TRIGGER block. If we're setting it to "2" we want to
         # discard those TAG_CHANGEs as well as all subsequent TAG_CHANGEs.
 
-        if (
-                self._current_buffer and
-                self._current_buffer.subtype == "TRIGGER" and
-                tag == "BOARD_VISUAL_STATE"
-        ):
-            self._current_buffer.buffer.append(line)
+        if self._current_buffer:
+            if self._current_buffer.subtype == "TRIGGER" and tag == "BOARD_VISUAL_STATE":
+                self._current_buffer.buffer.append(line)
 
-            if value == "1" or value == "2":
-                for i in range(len(self._current_buffer.buffer)):
-                    buffered_item = self._current_buffer.buffer[i]
-                    if (
-                            isinstance(buffered_item, str) and
-                            "TAG_CHANGE" in buffered_item
-                    ):
-                        buf = Buffer("TAG_CHANGE", "", parent=self._current_buffer)
-                        buf.buffer.append(buffered_item)
-                        buf.should_skip = True
-                        self._current_buffer.buffer[i] = buf
+                if value == "1" or value == "2":
+                    for i in range(len(self._current_buffer.buffer)):
+                        buffered_item = self._current_buffer.buffer[i]
+                        if (
+                                isinstance(buffered_item, str) and
+                                "TAG_CHANGE" in buffered_item
+                        ):
+                            buf = Buffer("TAG_CHANGE", "", parent=self._current_buffer)
+                            buf.buffer.append(buffered_item)
+                            buf.should_skip = True
+                            self._current_buffer.buffer[i] = buf
 
-                if value == "2":
-                    setattr(self._current_buffer, "skip_tag_changes", True)
+                    if value == "2":
+                        setattr(self._current_buffer, "skip_tag_changes", True)
 
-                return
+                    return
+
+            # If we're already buffering a DEATHS block, then changing the PLAYER_TECH_LEVEL
+            # to zero indicates a hero death (as opposed to a minion death) and so we
+            # should preserve the containing block.
+
+            elif self._current_buffer.subtype == "DEATHS":
+                if tag == "PLAYER_TECH_LEVEL" and value == "0":
+                    self._current_buffer.should_skip = False
 
         if (
                 tag.isdigit() or

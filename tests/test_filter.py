@@ -124,3 +124,69 @@ class TestBattlegroundsLogFilter:
             "Entity=GameEntity tag=STEP value=BEGIN_MULLIGAN"
 
         assert list(BattlegroundsLogFilter(StringIO(valid_tag))) == [valid_tag]
+
+    def test_preserve_deaths_139963(self):
+        hero_death = (
+            "D 13:38:27.4606595 GameState.DebugPrintPower() -         "
+            "BLOCK_START BlockType=DEATHS Entity=GameEntity "
+            "EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=0 "
+            "Target=0 SubOption=-1 \n"
+
+            "D 13:38:27.4606595 GameState.DebugPrintPower() -             "
+            "TAG_CHANGE Entity=[entityName=Rakanishu id=9591 zone=PLAY zonePos=0 "
+            "cardId=TB_BaconShop_HERO_75 player=13] tag=PLAYER_TECH_LEVEL value=0 \n"
+
+            "D 13:38:27.4606595 GameState.DebugPrintPower() -         BLOCK_END\n"
+        )
+
+        assert list(BattlegroundsLogFilter(StringIO(hero_death))) == [
+            line + "\n" for line in hero_death.split("\n") if line
+        ]
+
+        minion_death = StringIO(
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -     "
+            "BLOCK_START BlockType=DEATHS Entity=GameEntity "
+            "EffectCardId=System.Collections.Generic.List`1[System.String] "
+            "EffectIndex=0 Target=0 SubOption=-1 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=MuNGGG#2882 tag=NUM_MINIONS_PLAYER_KILLED_THIS_TURN "
+            "value=1 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=GameEntity tag=NUM_MINIONS_KILLED_THIS_TURN value=1 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=[entityName=Icky Imp id=455 zone=PLAY zonePos=1 "
+            "cardId=BG21_029 player=5] tag=1068 value=4 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=[entityName=Icky Imp id=455 zone=PLAY zonePos=1 "
+            "cardId=BG21_029 player=5] tag=1068 value=0 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=[entityName=Icky Imp id=455 zone=PLAY zonePos=1 "
+            "cardId=BG21_029 player=5] tag=EXHAUSTED value=0 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=[entityName=Icky Imp id=455 zone=PLAY zonePos=1 "
+            "cardId=BG21_029 player=5] tag=ZONE_POSITION value=0 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         "
+            "TAG_CHANGE Entity=[entityName=Icky Imp id=455 zone=PLAY zonePos=1 "
+            "cardId=BG21_029 player=5] tag=ZONE value=GRAVEYARD \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         TAG_CHANGE "
+            "Entity=MuNGGG#2882 tag=NUM_FRIENDLY_MINIONS_THAT_DIED_THIS_TURN value=1 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         TAG_CHANGE "
+            "Entity=MuNGGG#2882 tag=NUM_FRIENDLY_MINIONS_THAT_DIED_THIS_GAME value=1 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -         TAG_CHANGE "
+            "Entity=[entityName=Icky Imp id=455 zone=PLAY zonePos=1 cardId=BG21_029 "
+            "player=5] tag=DAMAGE value=0 \n"
+
+            "D 13:20:35.0997287 GameState.DebugPrintPower() -     BLOCK_END\n"
+        )
+
+        assert list(BattlegroundsLogFilter(minion_death)) == []
