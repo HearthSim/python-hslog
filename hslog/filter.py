@@ -88,8 +88,11 @@ class BattlegroundsLogFilter(Iterable):
         (such as those for DEATHRATTLEs) are discarded; ATTACK blocks for heroes will cause
         the next 4 blocks to be preserved, consistent with the logic for refreshing the
         `battlegrounds_combat_snapshot` materialized view
-    - DEATHS blocks with no subblocks and no TAG_CHANGES targeting PLAYER_TECH_LEVEL are
-        discarded
+    - DEATHS blocks with:
+            - no subblocks
+            - no TAG_CHANGES targeting PLAYER_TECH_LEVEL
+            - no FULL_ENTITY messages
+        ...are discarded
     - All options messages (from DebugPrintOptions) are discarded
     - Blacklisted and unknown tags for FULL_ENTITY and SHOW_ENTITY messages are discarded
     - TAG_CHANGES containing blacklisted and unknown tags are discarded
@@ -310,6 +313,8 @@ class BattlegroundsLogFilter(Iterable):
 
         if self._buffering_entity():
             self._end_buffer()
+        elif self._current_buffer and self._current_buffer.subtype == "DEATHS":
+            self._current_buffer.should_skip = False
 
         self._start_new_buffer(opcode, "")
         self._emit_line(line)

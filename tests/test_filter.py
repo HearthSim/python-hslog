@@ -190,3 +190,26 @@ class TestBattlegroundsLogFilter:
         )
 
         assert list(BattlegroundsLogFilter(minion_death)) == []
+
+    def test_preserve_deaths_162867(self):
+        full_entity = (
+            "D 04:48:45.7822406 GameState.DebugPrintPower() -     BLOCK_START "
+            "BlockType=DEATHS Entity=GameEntity "
+            "EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=0 "
+            "Target=0 SubOption=-1 \n"
+
+            "D 04:48:45.7822406 GameState.DebugPrintPower() -         FULL_ENTITY - "
+            "Creating ID=7724 CardID=BG24_005\n"
+
+            "D 04:48:45.7822406 GameState.DebugPrintPower() -             tag=CONTROLLER "
+            "value=4\n"
+
+            "D 04:48:45.7822406 GameState.DebugPrintPower() -             tag=CARDTYPE "
+            "value=MINION\n"
+
+            "D 04:48:45.7822406 GameState.DebugPrintPower() - BLOCK_END\n"
+        )
+
+        assert list(BattlegroundsLogFilter(StringIO(full_entity))) == [
+            line + "\n" for line in full_entity.split("\n") if line
+        ]
