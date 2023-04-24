@@ -1,6 +1,6 @@
 # hslog
 
-[![GitHub Workflow Status (branch)](https://img.shields.io/github/workflow/status/HearthSim/python-hslog/CI/master)](https://github.com/HearthSim/python-hslog/actions/workflows/ci.yml)
+[![GitHub Workflow Status (branch)](https://img.shields.io/github/actions/workflow/status/HearthSim/python-hslog/ci.yml?branch=main)](https://github.com/HearthSim/python-hslog/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/hslog.svg)](https://pypi.org/project/hslog/)
 
 hslog is a powerful Hearthstone Power.log deserializer.
