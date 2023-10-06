@@ -1,5 +1,7 @@
 from hearthstone.enums import TAG_TYPES, GameTag, GameType
 
+from hslog.exceptions import NoSuchEnum
+
 
 def parse_enum(enum, value):
 	if value.isdigit():
@@ -7,7 +9,7 @@ def parse_enum(enum, value):
 	elif hasattr(enum, value):
 		value = getattr(enum, value)
 	else:
-		raise Exception("Unhandled %s: %r" % (enum, value))
+		raise NoSuchEnum(enum, value)
 	return value
 
 

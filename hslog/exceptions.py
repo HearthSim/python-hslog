@@ -23,3 +23,19 @@ class ExporterError(Exception):
 class MissingPlayerData(RuntimeError):
 	"""Raised when it is not possible to reverse a LazyPlayer instance."""
 	pass
+
+
+class NoSuchEnum(Exception):
+	"""Raised to indicate a log included an invalid enum value."""
+
+	def __init__(self, enum, value):
+		"""Ctor.
+
+		:param enum: the enum type
+		:param value: the value that couldn't be parsed
+		"""
+
+		super().__init__("Unhandled %s: %r" % (enum, value))
+
+		self.enum = enum
+		self.value = value

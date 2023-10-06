@@ -11,6 +11,7 @@ from hearthstone.enums import (
 
 from hslog import LogParser, packets
 from hslog.exceptions import CorruptLogError, ParsingError
+from hslog.packets import TagChange
 from hslog.parser import parse_initial_tag
 
 from . import data
@@ -526,3 +527,31 @@ class TestLogParser:
 			match=r"Log contains contains a NUL \(0x00\) byte"
 		):
 			parser.read(StringIO(data.CORRUPT_SHOW_ENTITY))
+
+	def test_hearthstone_access_eoe(self):
+		parser = LogParser()
+		parser.read(StringIO(data.INITIAL_GAME))
+
+		parser.read(StringIO(
+			"D 16:58:40.1413635 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=0 Target=0 SubOption=2 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     BLOCK_START BlockType=POWER Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=0 Target=0 SubOption=2 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=The Twisting Nether id=133 zone=PLAY zonePos=2 cardId=TTN_960t player=1] tag=UNTOUCHABLE value=0 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=The Twisting Nether id=133 zone=PLAY zonePos=2 cardId=TTN_960t player=1] tag=TAG_SCRIPT_DATA_NUM_2 value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -         TAG_CHANGE Entity=[entityName=The Twisting Nether id=133 zone=PLAY zonePos=2 cardId=TTN_960t player=1] tag=UNTOUCHABLE value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     BLOCK_END\n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] tag=EOE value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] tag=NUM_ATTACKS_THIS_TURN value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] tag=EXHAUSTED value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Legion Invasion! id=45 zone=SETASIDE zonePos=0 cardId=TTN_960t4 player=1] tag=LITERALLY_UNPLAYABLE value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] tag=TITAN_ABILITY_USED_3 value=1 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     BLOCK_START BlockType=TRIGGER Entity=[entityName=Sargeras, the Destroyer id=42 zone=PLAY zonePos=1 cardId=TTN_960 player=1] EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=2 Target=0 SubOption=-1 TriggerKeyword=TAG_NOT_SET\n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     BLOCK_END\n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=GameEntity tag=1323 value=25 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Kaibu#11431 tag=NUM_OPTIONS_PLAYED_THIS_TURN value=7 \n"  # noqa
+			"D 16:58:40.1413635 GameState.DebugPrintPower() - BLOCK_END			\n"  # noqa
+		))
+		parser.flush()
+
+		packet_tree = parser.games[0]
+		tag_changes = [p for p in packet_tree.packets[1] if isinstance(p, TagChange)]
+		assert len(tag_changes) == 6

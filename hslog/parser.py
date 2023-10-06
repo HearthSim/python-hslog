@@ -9,7 +9,7 @@ from hearthstone.enums import (
 )
 
 from . import packets, tokens
-from .exceptions import CorruptLogError, ParsingError, RegexParsingError
+from .exceptions import CorruptLogError, NoSuchEnum, ParsingError, RegexParsingError
 from .packets import (
 	Block, Choices, ChosenEntities, CreateGame,
 	MetaData, Packet, PacketTree, SendChoices, SubSpell
@@ -1134,4 +1134,17 @@ class LogParser:
 			callback = handler.find_callback(method)
 			if callback:
 				ts = self.parse_timestamp(ts, method)
-				return callback(self._parsing_state, ts, msg)
+
+				try:
+					return callback(self._parsing_state, ts, msg)
+				except NoSuchEnum as nse:
+					if nse.enum == GameTag and nse.value == "EOE":
+
+						# This can happen if the user is using a version of the
+						# HearthstoneAccess mod that hasn't been fully synchronized with the
+						# latest Hearthstone enums. `EOE` appears to be a HearthstoneAccess
+						# signal value indicating "end of enum."
+
+						pass
+					else:
+						raise
