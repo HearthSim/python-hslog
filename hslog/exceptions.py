@@ -15,17 +15,7 @@ class CorruptLogError(ParsingError):
 	pass
 
 
-class ExporterError(Exception):
-	"""Generic exception that happens during PacketTree export."""
-	pass
-
-
-class MissingPlayerData(RuntimeError):
-	"""Raised when it is not possible to reverse a LazyPlayer instance."""
-	pass
-
-
-class NoSuchEnum(Exception):
+class NoSuchEnum(ParsingError):
 	"""Raised to indicate a log included an invalid enum value."""
 
 	def __init__(self, enum, value):
@@ -39,3 +29,13 @@ class NoSuchEnum(Exception):
 
 		self.enum = enum
 		self.value = value
+
+
+class ExporterError(Exception):
+	"""Generic exception that happens during PacketTree export."""
+	pass
+
+
+class MissingPlayerData(RuntimeError):
+	"""Raised when it is not possible to reverse a LazyPlayer instance."""
+	pass
