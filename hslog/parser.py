@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, Optional, Union
 from aniso8601 import parse_time
 from hearthstone.enums import (
 	BlockType, ChoiceType, FormatType, GameTag, GameType,
-	MetaDataType, Mulligan, OptionType, PlayReq, PowerType
+	MetaDataType, Mulligan, OptionType, PowerType
 )
 
 from . import packets, tokens
@@ -177,8 +177,6 @@ def clean_option_errors(error, error_param):
 
 	if error == "NONE":
 		error = None
-	else:
-		error = parse_enum(PlayReq, error)
 
 	if not error_param:
 		error_param = None

@@ -5,8 +5,7 @@ from unittest.mock import patch
 import pytest
 from aniso8601 import parse_datetime, parse_time
 from hearthstone.enums import (
-	CardType, ChoiceType, GameTag, OptionType,
-	PlayReq, PlayState, PowerType, State, Step, Zone
+	CardType, ChoiceType, GameTag, OptionType, PlayState, PowerType, State, Step, Zone
 )
 
 from hslog import LogParser, packets
@@ -303,7 +302,7 @@ class TestLogParser:
 		assert op0.id == 0
 		assert op0.type == OptionType.END_TURN
 		assert op0.entity is None
-		assert op0.error == PlayReq.INVALID
+		assert op0.error == "INVALID"
 		assert op0.error_param is None
 
 		op1 = options_packet.options[1]
@@ -317,7 +316,7 @@ class TestLogParser:
 		target = op1.options[11]
 		assert target.id == 11
 		assert target.entity == 37
-		assert target.error == PlayReq.REQ_TARGET_MAX_ATTACK
+		assert target.error == "REQ_TARGET_MAX_ATTACK"
 		assert target.error_param == 3
 
 	def test_options_no_option_packet(self):
