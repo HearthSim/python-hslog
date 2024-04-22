@@ -8,7 +8,7 @@ from hslog.exceptions import CorruptLogError, RegexParsingError
 from hslog.utils import parse_tag
 
 
-# List of TAG_CHANGE tags to discard
+# List of TAG_CHANGE tags to discard/keep
 
 BLACKLISTED_TAGS = [
     "EXHAUSTED",
@@ -18,6 +18,10 @@ BLACKLISTED_TAGS = [
     "NUM_ATTACKS_THIS_TURN",
     "NUM_TURNS_IN_PLAY",
     "TECH_LEVEL",
+]
+
+WHITELISTED_TAGS = [
+    "COPIED_FROM_ENTITY_ID",
 ]
 
 # List of FULL_ENTITY tags to discard
@@ -403,7 +407,8 @@ class BattlegroundsLogFilter(Iterable):
                 tag in BLACKLISTED_TAGS or
                 (
                     self._current_buffer is not None and
-                    hasattr(self._current_buffer, "skip_tag_changes")
+                    hasattr(self._current_buffer, "skip_tag_changes") and
+                    tag not in WHITELISTED_TAGS
                 )
         ):
             self._start_new_buffer("TAG_CHANGE", "")
