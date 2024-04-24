@@ -382,7 +382,9 @@ class BattlegroundsLogFilter(Iterable):
                         buffered_item = self._current_buffer.buffer[i]
                         if (
                                 isinstance(buffered_item, str) and
-                                "TAG_CHANGE" in buffered_item
+                                "TAG_CHANGE" in buffered_item and
+                                # don't skip ZONE tags for now
+                                "ZONE" not in buffered_item
                         ):
                             buf = Buffer("TAG_CHANGE", "", parent=self._current_buffer)
                             buf.buffer.append(buffered_item)
