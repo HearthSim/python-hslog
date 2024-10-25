@@ -100,8 +100,6 @@ class BattlegroundsLogFilter(Iterable):
     - All options messages (from DebugPrintOptions) are discarded
     - Blacklisted and unknown tags for FULL_ENTITY and SHOW_ENTITY messages are discarded
     - TAG_CHANGES containing blacklisted and unknown tags are discarded
-    - All TAG_CHANGES that are part of a TRIGGER block that include a BOARD_VISUAL_STATE=2
-        tag change are discarded
     - All TAG_CHANGES that precede a BOARD_VISUAL_STATE=1 tag change in a TRIGGER block are
         discarded
     """
@@ -391,9 +389,6 @@ class BattlegroundsLogFilter(Iterable):
                             buf.buffer.append(buffered_item)
                             buf.should_skip = True
                             self._current_buffer.buffer[i] = buf
-
-                    if value == "2":
-                        setattr(self._current_buffer, "skip_tag_changes", True)
 
                     return
 
