@@ -99,7 +99,7 @@ class ParsingState:
 			self.send_choice_packet = None
 
 	def parse_entity_id(self, entity: str) -> int:
-		if entity.isdigit():
+		if entity.isdecimal():
 			return int(entity)
 
 		if entity == tokens.GAME_ENTITY:

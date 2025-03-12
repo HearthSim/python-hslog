@@ -401,7 +401,7 @@ class BattlegroundsLogFilter(Iterable):
                     self._current_buffer.should_skip = False
 
         if (
-                tag.isdigit() or
+                tag.isdecimal() or
                 tag in BLACKLISTED_TAGS or
                 (
                     self._current_buffer is not None and

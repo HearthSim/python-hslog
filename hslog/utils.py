@@ -4,7 +4,7 @@ from hslog.exceptions import NoSuchEnum
 
 
 def parse_enum(enum, value):
-	if value.isdigit():
+	if value.isdecimal():
 		value = int(value)
 	elif hasattr(enum, value):
 		value = getattr(enum, value)
@@ -17,7 +17,7 @@ def parse_tag(tag, value):
 	tag = parse_enum(GameTag, tag)
 	if tag in TAG_TYPES:
 		value = parse_enum(TAG_TYPES[tag], value)
-	elif value.isdigit():
+	elif value.isdecimal():
 		value = int(value)
 	else:
 		raise NotImplementedError("Invalid string value %r = %r" % (tag, value))
