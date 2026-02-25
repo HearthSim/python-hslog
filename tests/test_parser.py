@@ -381,6 +381,12 @@ class TestLogParser:
 		parser = LogParser()
 		parser.read(StringIO(data.INITIAL_GAME))
 
+		parser.read(StringIO(
+			"D 00:35:10.5056220 GameState.DebugPrintGame() - PlayerID=1, PlayerName=GoodestEng#3914"  # noqa
+			"D 00:35:10.5056220 GameState.DebugPrintGame() - PlayerID=2, PlayerName=UNKNOWN HUMAN PLAYER"  # noqa
+			"D 00:35:37.6421200 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Kelsier#6544 tag=MULLIGAN_STATE value=DONE"  # noqa
+		))
+
 		# This shouldn't raise an exception
 		# Rewind has FULL_ENTITY updates after RESET_GAME, inside GAME_RESET Block
 		parser.read(StringIO(
@@ -390,6 +396,10 @@ class TestLogParser:
 			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CONTROLLER value=1\n"  # noqa
 			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CARDTYPE value=PLAYER\n"  # noqa
 			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=PLAYER_ID value=1\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -     FULL_ENTITY - Updating Kelsier CardID="  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CONTROLLER value=2"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CARDTYPE value=PLAYER"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=PLAYER_ID value=2"  # noqa
 			"D 00:38:37.2981040 GameState.DebugPrintPower() - BLOCK_END\n"  # noqa
 		))
 		parser.flush()
