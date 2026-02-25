@@ -486,7 +486,7 @@ class PowerHandler(HandlerBase):
 		return self._full_entity(ps, ts, int(entity_id), card_id)
 
 	def full_entity_update(self, ps: ParsingState, ts, entity_id: str, card_id: str):
-		return self._full_entity(ps, ts, ps.parse_entity_id(entity_id), card_id)
+		return self._full_entity(ps, ts, ps.parse_entity_or_player(entity_id), card_id)
 
 	@staticmethod
 	def show_entity(ps: ParsingState, ts, entity, card_id):
