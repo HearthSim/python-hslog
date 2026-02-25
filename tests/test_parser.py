@@ -384,7 +384,7 @@ class TestLogParser:
 		parser.read(StringIO(
 			"D 00:35:10.5056220 GameState.DebugPrintGame() - PlayerID=1, PlayerName=GoodestEng#3914"  # noqa
 			"D 00:35:10.5056220 GameState.DebugPrintGame() - PlayerID=2, PlayerName=UNKNOWN HUMAN PLAYER"  # noqa
-			"D 00:35:37.6421200 GameState.DebugPrintPower() -     TAG_CHANGE Entity=Kelsier#6544 tag=MULLIGAN_STATE value=DONE"  # noqa
+			"D 00:35:37.6421200 GameState.DebugPrintPower() - TAG_CHANGE Entity=Kelsier#6544 tag=MULLIGAN_STATE value=DONE"  # noqa
 		))
 
 		# This shouldn't raise an exception
