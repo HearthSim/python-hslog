@@ -386,10 +386,10 @@ class TestLogParser:
 		parser.read(StringIO(
 			"D 00:38:37.2981040 GameState.DebugPrintPower() - BLOCK_START BlockType=GAME_RESET Entity=[entityName=Stadium Announcer id=16 zone=PLAY zonePos=1 cardId=TIME_034 player=1] EffectCardId=System.Collections.Generic.List`1[System.String] EffectIndex=-1 Target=0 SubOption=-1\n"  # noqa
 			"D 00:38:37.2981040 GameState.DebugPrintPower() -     RESET_GAME\n"  # noqa
-			"D 00:38:37.2981040 GameState.DebugPrintPower() -     FULL_ENTITY - Updating [entityName=Portal Vanguard id=10 zone=DECK zonePos=0 cardId= player=1] CardID=\n"  # noqa
-			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=ZONE value=DECK\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -     FULL_ENTITY - Updating GoodestEng CardID=\n"  # noqa
 			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CONTROLLER value=1\n"  # noqa
-			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=ENTITY_ID value=10\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CARDTYPE value=PLAYER\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=PLAYER_ID value=1\n"  # noqa
 			"D 00:38:37.2981040 GameState.DebugPrintPower() - BLOCK_END\n"  # noqa
 		))
 		parser.flush()
