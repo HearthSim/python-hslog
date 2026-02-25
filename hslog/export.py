@@ -340,9 +340,9 @@ class FriendlyPlayerExporter(BaseExporter):
 	def __init__(self, packet_tree):
 		super().__init__(packet_tree)
 		self._controller_map: Dict[int, int] = {}
-		self.friendly_player = None
+		self.friendly_player: Optional[int] = None
 		self._ai_player = None
-		self._non_ai_players = []
+		self._non_ai_players: List[int] = []
 
 	def export(self):
 		for packet in self.packet_tree:
@@ -362,7 +362,12 @@ class FriendlyPlayerExporter(BaseExporter):
 		if packet.lo == 0:
 			self._ai_player = packet.player_id
 		else:
-			self._non_ai_players.append(packet.player_id)
+			player_id_or_player = packet.player_id
+			if isinstance(player_id_or_player, PlayerReference):
+				self._non_ai_players.append(player_id_or_player.player_id)
+			else:
+				self._non_ai_players.append(player_id_or_player)
+
 
 	def handle_tag_change(self, packet):
 		if packet.tag == GameTag.CONTROLLER:
