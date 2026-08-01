@@ -230,21 +230,39 @@ class EntityTreeExporter(BaseExporter):
 	class EntityNotFound(Exception):
 		pass
 
-	def __init__(self, packet_tree, player_manager: Optional[PlayerManager] = None):
+	def __init__(
+		self,
+		packet_tree,
+		player_manager: Optional[PlayerManager] = None,
+		tolerate_missing_entities: bool = False,
+	):
+		"""
+		:param tolerate_missing_entities: When True, an operation (TAG_CHANGE, SHOW_ENTITY,
+			HIDE_ENTITY, CHANGE_ENTITY) that targets an entity which was never created is
+			skipped instead of raising EntityNotFound. Used for BobsBuddy diagnose
+			combat_outcome.py and slice_combat.py scripts since some Battlegrounds logs sometimes
+			reference entities never created: e.g., leaderboard/hero-power tag changes.
+		"""
 		super().__init__(packet_tree)
 
 		self.game: Optional[Game] = None
 
 		self.player_manager = player_manager
 
-	def find_entity(self, entity_id: int, opcode) -> Card:
+		self.tolerate_missing_entities = tolerate_missing_entities
+
+	def find_entity(self, entity_id: int, opcode) -> Optional[Card]:
 		try:
 			entity = self.game.find_entity_by_id(entity_id)
 		except MissingPlayerData:
+			if self.tolerate_missing_entities:
+				return None
 			raise self.EntityNotFound(
 				f"Error getting entity {entity_id} for {opcode}"
 			)
 		if not entity:
+			if self.tolerate_missing_entities:
+				return None
 			raise self.EntityNotFound(
 				f"Attempting {opcode} on entity {entity_id} (not found)"
 			)
@@ -303,16 +321,22 @@ class EntityTreeExporter(BaseExporter):
 
 	def handle_hide_entity(self, packet):
 		entity = self.find_entity(packet.entity, "HIDE_ENTITY")
+		if entity is None:
+			return None
 		entity.hide()
 		return entity
 
 	def handle_show_entity(self, packet):
 		entity = self.find_entity(packet.entity, "SHOW_ENTITY")
+		if entity is None:
+			return None
 		entity.reveal(packet.card_id, dict(packet.tags))
 		return entity
 
 	def handle_change_entity(self, packet):
 		entity = self.find_entity(packet.entity, "CHANGE_ENTITY")
+		if entity is None:
+			return None
 		if not entity.card_id:
 			# This can only happen if the entity's initial reveal was missed.
 			# Not raising this can cause entities to have a card id, but no initial_card_id.
@@ -326,6 +350,8 @@ class EntityTreeExporter(BaseExporter):
 	def handle_tag_change(self, packet):
 		entity_id = coerce_to_entity_id(packet.entity)
 		entity = self.find_entity(int(entity_id), "TAG_CHANGE")
+		if entity is None:
+			return None
 		entity.tag_change(packet.tag, packet.value)
 
 		return entity
