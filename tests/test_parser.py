@@ -486,6 +486,34 @@ class TestLogParser:
 		options_packet = packet_tree.packets[-1]
 		assert isinstance(options_packet, packets.Options)
 
+	def test_options_missing_nested_block_end(self):
+		parser = LogParser()
+		parser.read(StringIO(data.INITIAL_GAME))
+
+		parser.read(StringIO(
+			"D 10:42:45.3296575 GameState.DebugPrintPower() - BLOCK_START BlockType=PLAY Entity=[entityName=Reflectotron id=3334 zone=PLAY zonePos=2 cardId=BG36_506 player=2] EffectCardId= EffectIndex=0 Target=0 SubOption=-1 \n"  # noqa
+			"D 10:42:45.3296575 GameState.DebugPrintPower() -     BLOCK_START BlockType=ATTACK Entity=[entityName=Reflectotron id=3334 zone=PLAY zonePos=2 cardId=BG36_506 player=2] EffectCardId= EffectIndex=1 Target=0 SubOption=-1 \n"  # noqa
+			"D 10:42:45.3296575 GameState.DebugPrintPower() -         BLOCK_START BlockType=TRIGGER Entity=[entityName=3ofKindCheckPlayerEnchant id=4104 zone=PLAY zonePos=0 cardId=TB_BaconShop_3ofKindChecke player=2] EffectCardId= EffectIndex=-1 Target=0 SubOption=-1 TriggerKeyword=0\n"  # noqa
+			"D 10:42:45.3296575 GameState.DebugPrintPower() -         BLOCK_END\n"  # noqa
+			"D 10:42:45.3296575 GameState.DebugPrintPower() -         TAG_CHANGE Entity=BehEh#1355 tag=NUM_OPTIONS_PLAYED_THIS_TURN value=4 \n"  # noqa
+			"D 10:42:45.4134455 GameState.DebugPrintOptions() - id=55\n"  # noqa
+			"D 10:42:45.4134455 GameState.DebugPrintOptions() -   option 0 type=END_TURN mainEntity= error=INVALID errorParam=\n"  # noqa
+		))
+		parser.flush()
+
+		packet_tree = parser.games[0]
+
+		play_block_without_end = packet_tree.packets[1]
+		assert isinstance(play_block_without_end, packets.Block)
+		assert play_block_without_end.ended
+
+		attack_block_without_end = play_block_without_end.packets[0]
+		assert isinstance(attack_block_without_end, packets.Block)
+		assert attack_block_without_end.ended
+
+		options_packet = packet_tree.packets[-1]
+		assert isinstance(options_packet, packets.Options)
+
 	def test_cached_tag_for_dormant_change(self):
 		parser = LogParser()
 		parser.read(StringIO(data.INITIAL_GAME))

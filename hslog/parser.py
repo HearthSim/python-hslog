@@ -722,13 +722,13 @@ class OptionsHandler(HandlerBase):
 	def _check_for_options_hack(ps: ParsingState, ts):
 
 		# Battlegrounds games tend to omit the BLOCK_END just before options start. As
-		# options will always be on the top level, we can safely close any remaining block
-		# that is open at this time.
+		# options will always be on the top level, we can safely close any remaining blocks
+		# (possibly nested) that are open at this time.
 
-		if isinstance(ps.current_block, packets.Block):
+		# guard on parent to avoid looping forever on an unpoppable block
+		while isinstance(ps.current_block, packets.Block) and ps.current_block.parent:
 			logging.warning("[%s] Broken option nesting. Working around...", ts)
 			ps.block_end(ts)
-			assert not isinstance(ps.current_block, packets.Block)
 
 	def handle_options(self, ps: ParsingState, ts, data):
 		self._check_for_options_hack(ps, ts)
