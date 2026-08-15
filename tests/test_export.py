@@ -1,8 +1,15 @@
 import time
+from io import StringIO
 
-from hslog.export import BaseExporter, CompositeExporter, FriendlyPlayerExporter
+from hearthstone.entities import Player
+from hearthstone.enums import GameTag
+
+from hslog.export import (
+	BaseExporter, CompositeExporter, EntityTreeExporter, FriendlyPlayerExporter
+)
 from hslog.packets import Block, SubSpell
 
+from . import data
 from .conftest import logfile
 
 
@@ -346,3 +353,31 @@ class TestFriendlyPlayerExporter:
 		fpe = FriendlyPlayerExporter(packet_tree)
 		friendly_player = fpe.export()
 		assert friendly_player == 3
+
+
+class TestEntityTreeExporter:
+	def test_full_entity_update_for_player_in_game_reset(self, parser):
+		parser.read(StringIO(data.INITIAL_GAME))
+		parser.read(StringIO(
+			"D 00:35:10.5056220 GameState.DebugPrintGame() - PlayerID=1, PlayerName=GoodestEng#3914\n"  # noqa
+			"D 00:35:10.5056220 GameState.DebugPrintGame() - PlayerID=2, PlayerName=Kelsier#6544\n"  # noqa
+		))
+		parser.read(StringIO(
+			"D 00:38:37.2981040 GameState.DebugPrintPower() - BLOCK_START BlockType=GAME_RESET Entity=[entityName=Stadium Announcer id=16 zone=PLAY zonePos=1 cardId=TIME_034 player=1] EffectCardId= EffectIndex=-1 Target=0 SubOption=-1\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -     RESET_GAME\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -     FULL_ENTITY - Updating GoodestEng CardID=\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CONTROLLER value=1\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=CARDTYPE value=PLAYER\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() -         tag=PLAYER_ID value=1\n"  # noqa
+			"D 00:38:37.2981040 GameState.DebugPrintPower() - BLOCK_END\n"  # noqa
+		))
+		parser.flush()
+
+		exporter = EntityTreeExporter(
+			parser.games[0], player_manager=parser.player_manager
+		).export()
+
+		assert len(list(exporter.game.entities)) == 3
+		entity = exporter.game.find_entity_by_id(2)
+		assert isinstance(entity, Player)
+		assert entity.tags[GameTag.PLAYER_ID] == 1

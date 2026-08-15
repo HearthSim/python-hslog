@@ -303,7 +303,7 @@ class EntityTreeExporter(BaseExporter):
 		return entity
 
 	def handle_full_entity(self, packet):
-		entity_id = packet.entity
+		entity_id = coerce_to_entity_id(packet.entity)
 
 		# Check if the entity already exists in the game first.
 		# This prevents creating it twice.
